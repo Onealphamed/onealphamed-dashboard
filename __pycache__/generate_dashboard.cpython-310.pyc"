@@ -1,0 +1,868 @@
+o
+    ôWÂirÑ  ã                
+   @   s  d Z ddlZddlZddlZddlZddlZddl mZ ee	ƒj
+Z
+e
+d Ze
+d Z
+g d¢Zd d„ eeƒD ƒZg d	¢Zd
+d
+dd
+ddddddddd	œZddddddddddd d!d	œZd"d#„ Zd$d%„ Zd&d'„ Zd(d)„ Zd*d+„ Zd,d-„ Zd.d/„ Zd0d1„ Zed2kreƒ  dS dS )3u0  
+OnealphaMed â€” Dashboard Generator
+===================================
+Reads  : Project Profit.xlsx  (the source data file)
+Outputs: OnealphaMed_Dashboard.html  (the interactive dashboard)
+
+Run locally  : python generate_dashboard.py
+GitHub Action: triggered automatically when you push the Excel file
+é    N)ÚPathzProject Profit.xlsxzOnealphaMed_Dashboard.html)zAug'25z Sept'25zOct'25zNov'25zDec'25zJan'26zFeb'26zMar'26c                 C   s   i | ]	\}}||d  “qS )é   © )Ú.0ÚiÚmr   r   úN/sessions/great-fervent-johnson/mnt/Project Profit Sheet/generate_dashboard.pyÚ
+<dictcomp>   s    r	   )ÚHeteroÚBayerÚLupinúP&GÚCiplaÚ	AurobindoÚ
+NovoNordiskÚZydusÚKOITAÚAmnealÚResmedú
+Sun Pharmaz #C0392Bz #1A6E37z #1F618Dz #D35400z #6C3483z #117A65z #7D3C98z #1565C0z #00796Bz #E65100z #37474Fz #F57F17z #FADBD8z #D5F5E3z #D6EAF8z #FAE5D3z #E8DAEFz #D1F2EBz #F5EEF8z #DDEEFFz #E0F2F1z #FFF3E0z #ECEFF1z #FFFDE7c                 C   s\   t  | ¡s	| dv r
+dS t| ƒ ¡  dd¡ dd¡ ¡ } t dd| ¡} zt | ƒW S    Y dS ) N)ú-ÚnanÚNoneÚ g        ÚINRr   ú,z	\+GST\..*)ÚpdÚisnaÚstrÚstripÚ replaceÚreÚsubÚfloat)Úvalr   r   r   Ú	clean_num<   s    
+r%   c                 C   s@  t  | ¡s
+t| ƒ ¡ dkrd S t| ƒ ¡ }t  |¡s t|ƒ ¡ nd}| ¡ }|dks.d|v r0d S z t|ƒ W d S    Y d|v sN| ¡ dkrJd|v sN|d krPdS |d	krVd	S |d
+kr\d
+S |d
+v rbdS |d
+krhd
+S |dkspd|v rrdS d|v s~d|v s~|dkr€dS |dkr†dS |dkrŒdS |dkr’dS |dkr˜dS |dv rždS d S )Nr   r   ÚTOTALÚdatetimeÚheteroÚ
+translationzFrench Translationr
+   r
+   r   )r
+   zP & Gr
+   r   r   ÚkiosqÚnovoÚ nordiskÚOscarr   r   r   r   r   )r   ÚHeadonr   )r   r   r   r   Úlowerr#   )ÚclientÚ projectÚcÚpÚclr   r   r   Ú
+get_companyF   s4   $r5   c                 C   s‚   t  | ¡r	t| ƒS t| ƒ ¡ }| ¡ }d|v sd|v rdS d|v r#dS d|v r)d S d|v s1d	|v r3d
+S d
+|v r9dS d
+|v r?dS |S )zCMerge known duplicate / alias vendor names into one canonical name.zjss editÚjyotibzJSS Edits / JyothibaÚarvindz
+Arvind TechÚsafiyazSafiya SultanaÚelevanÚelevenz
+Eleven LabsÚheygenÚHeyGenÚ	indonesiazIndonesia Vendor)r   r   r   r   r/   )ÚvendorÚvÚvlr   r   r   Únormalize_vendorb   s   
+rA   c                 C   s´   t  | ¡s
+t| ƒ ¡ dv rdS t| ƒ}| ¡ }| d¡s&| d¡s&| d¡r(dS d D ]	}||v r3 dS q*d	D ]	}||v r? d
+S q6d
+D ]	}||v rK dS qBd
+D ]	}||v rW dS qNdS )zLReturns None for Prof/Dr (doctor honorariums - excluded per business logic).)r   r   r   r   ÚOtherzprof zdr zdr.N)Ú
+vedprakashzjss edits / jyothibaÚneerajz
+eleven labsr;   úVideo/Graphic Design)
+zsafiya sultanazmedical writerÚ combirdÚkarishmaÚ shivaniÚ nanditaÚ vandanaÚashishÚ perveduÚmandarúMedical Writing)
+Ú dynamicÚhotelzav setzinvite printÚeventÚradissonz
+taj vivantaÚflightÚcruzrÚ printerzindonesia vendorÚEvents)Ú swarnimz
+arvind techz st teamz	wa dissemÚinternalúWebinar/Tech) r   r   r   r   rA   r/   Ú
+startswith)r>   Úvnr?   Úkr   r   r   Úget_vendor_catp   s.   ÿÿÿÿr]   c              
+   C   s$  t d| › ƒ tj| dtd}g d¢|_g }| ¡ D ]o\}}t|d ƒ ¡ }t|d ƒ ¡ }t|d  ƒ ¡ } |dv s>| d	v r?qt |d
+ ƒ}|dkrJqt||ƒ}	|	d u rTqt |d
+ ƒ}
+t |d ƒ}
+|
+dkrl|dkrl||
+ }
+|dkrt|
+| nd}| 	|||	| t
+ 
+| d¡||
+|
+|d
+œ	¡ qg }
+d  } } }}| ¡ D ]]\}}t|d ƒ ¡ }t|d ƒ ¡ }t|d  ƒ ¡ } t|d ƒ ¡ }t |d ƒ}
+|dvr×| d	vr×t||ƒ}|r×|}| }|}|
+dkrõ|dvrõ|rõt|ƒ}|rõ|
+ 	|||t
+|ƒ||
+dœ¡ q˜t |¡}t |
+¡}t dt|ƒ› dt|ƒ› ƒ ||fS )Nz
+  Reading: r   )Ú
+sheet_nameÚdtype)
+úProject NameÚClientÚMonthÚVendorzTasked AssignedÚCostú
+Total CostzPO ValueúInvoice AmountúProject ProfitÚPOzInvoice Raised DatezProject Profitabilityr`   ra   rb   )r&   r   r   )r   r   rf   re   rg   )	Ú Projectra   Ú Companyrb   Ú
+MonthOrderÚ Invoicerd   ÚProfitÚ	ProfitPctrc   rd   )r   r   r&   )r   r   r   r   )ri   rj   rb   rc   ÚCategoryrd   z  Projects loaded: z | Vendor entries: )Úprintr   Ú
+read_excelr   Ú columnsÚiterrowsr   r%   r5   ÚappendÚ
+MONTH_ORDERÚgetr]   rA   Ú	DataFrameÚlen)Ú
+excel_pathÚdfÚproject_rowsÚ_ÚrowÚpnamer0   ÚmonthÚinvÚ companyÚcostÚprofitÚpctÚ
+vendor_rowsÚcur_projÚ
+cur_clientÚ	cur_monthÚcur_cor>   ÚcompÚcatÚ proj_dfÚ vend_dfr   r   r   Úload_and_processŽ   sj   
+
+
+ý 
+ý€
+
+rŽ   c                     s~  i }t |d< t|d< ‡fdd„t D ƒ‡fdd„t D ƒ‡fdd„t D ƒd œ|d< i |d	< tD ]7}ˆˆd
+ |k }t|d
+  ¡ ƒ}|t|d  ¡ ƒt|d
+  ¡ ƒ|dkr\t|d
+  ¡ | ƒnddœ|d	 |< q-i |d< tD ]\}g }g } g }g }	t D ]D}
+ˆˆd
+ |kˆd |
+k@  }t|d
+  ¡ ƒ}
+t|d  ¡ ƒ}t|d
+  ¡ ƒ}
+| |
+¡ |  |¡ | |
+¡ |	 |
+dkr¸|
+|
+ nd¡ qw|| ||	dœ|d |< qki |d< tD ]"}ˆˆd
+ |k g d¢  ¡ }|jdd
+gddgd  d¡|d |< qÎg d¢‰ ˆˆd dk }| d¡d  ¡ jdd}g }| 	d¡ 
+¡ D ]&\}}||d |k d  
+¡ }| |t|ƒt|ƒr3|j
+d nddœ¡ qi }i }ˆ D ]/}||d |k  d¡d  ¡ jdd}dd„ | 	d¡ 
+¡ D ƒ||< dd„ | 
+¡ D ƒ||< q@‡fd d!„ˆ D ƒ‡fd"d!„ˆ D ƒ‡ ‡fd#d!„tD ƒ|||d$œ|d%< tˆd
+  ¡ ƒ}|tˆd  ¡ ƒtˆd
+  ¡ ƒ|dkr·tˆd
+  ¡ | ƒnddœ|d&< |S )'NÚmonthsÚ	companiesc                    ó(   g | ]}t ˆ ˆ d  |k d  ¡ ƒ‘qS )rb   rl   ©r#   Úsum©r   r    ©rŒ   r   r   Ú
+<listcomp>Ò   ó   ( z%build_data_object.<locals>.<listcomp>c                    r‘   )rb   rd   r’   r”   r•   r   r   r–   Ó   r—   c                    r‘   )rb   rm   r’   r”   r•   r   r   r–   Ô   r—   )Ú invoicer‚   rƒ   Ú monthlyÚcompany_totalsrj   rl   rd   rm   r   )r˜   r‚   rƒ   r„   Úcompany_monthlyrb   Úprojects)ri   rb   rl   rd   rm   rn   TF)Ú	ascendingÚ records)rN   rY   rV   rE   ro   rB   rc   é   )Únamer‚   r‹   c                 S   ó   g | ]
+\}}|t |ƒd œ‘qS ©)r    r‚   ©r#   ©r   r?   r2   r   r   r   r–     ó    c                 S   r¡   r¢   r£   r¤   r   r   r   r–   	  r¥   c                    s"   i | ]
+‰ ˆ ‡ ‡fd d„t D ƒ“qS )c                     s4   g | ]}t ˆˆd  ˆ kˆd |k@  d  ¡ ƒ‘qS )ro   rb   rd   r’   r”   )r‹   r   r   r   r–   
+  s    ,ÿz0build_data_object.<locals>.<dictcomp>.<listcomp>)ÚMONTHS©r   ©r   )r‹   r   r	     s    þÿÿz%build_data_object.<locals>.<dictcomp>c                     s*   i | ]}|t ˆ ˆ d  |k d  ¡ ƒ“qS )ro   rd   r’   ©r   r‹   r¨   r   r   r	     s    ÿÿc                    s"   i | ]
+‰ ˆ ‡ ‡fd d„ˆD ƒ“qS )c                    s6   i | ]}|t ˆˆd  ˆ kˆd |k@  d  ¡ ƒ“qS )rj   ro   rd   r’   r©   )Úcor   r   r   r	     s    (ÿÿz0build_data_object.<locals>.<dictcomp>.<dictcomp>r   r§   )ÚCATSr   )rª   r   r	     s    üþÿ)r™   ÚtotalsÚ
+by_companyÚtop3_overallÚ
+top3_by_catÚ
+all_by_catr>   Úgrand)r¦   Ú	COMPANIESr#   r“   rt   ÚcopyÚ
+sort_valuesÚ to_dictÚ groupbyÚheadÚitemsÚmoderx   Úiloc)rŒ   r   Údatarª   r"   r€   Úinv_lÚcost_lÚprof_lÚpct_lr    r   r2   r3   Ú vd_filtÚ
+vendor_totalsr®   r?   Úcat_moder¯   r°   r‹   Ú	total_invr   )r«   rŒ   r   r   Úbuild_data_objectÌ   sŽ   
+ýü ÿÿþþ.&
+ý
+þû 
+í 
+ürÄ   c           	      C   s.  t j| dd}d}tD ]!}d| ¡  dd¡ d d¡› }|d	|› d
+t| › d
+|› d 7 }q
+d}tD ]>}d| ¡  dd¡ d d¡› }t| }|d
+|› d|› d|› d|› d|› d|› d|› d|› d|› d|› d|› d|› d7 }q1d dd„ tD ƒ¡} d|› d|› d|› d t  t¡› d!t  t ¡› d"| › d#
+}|S )$N)r   ú:)Ú
+separatorsr   Úco_ú&Úandú r|   z-    <div class="nav-item" onclick="showPage('z3')">
+      <span class="nav-dot" style="background:z
+"></span> z
+    </div>
+z
+<div id="page-z;" class="page">
+  <div class="co-header" style="background:z
+">
+    <h2>u§   </h2>
+    <p>Month-wise project profit analysis &nbsp;|&nbsp; Aug 2025 â€” Mar 2026</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:uz   ">
+      <div class="kpi-icon">ðŸ’°</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-uê   -invoice">â€”</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">ðŸ“¦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-ué   -cost">â€”</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">ðŸ“ˆ</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-uë   -profit">â€”</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">ðŸŽ¯</div><div class="kpi-label">Avg Profit %</div>
+      <div class="kpi-value" id="kpi-uØ   -pct">â€”</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>ðŸ“… Monthly Invoice vs Cost vs Profit (â‚¹)</h3>
+      <canvas id="chart-u|   -bar"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>ðŸ• Revenue by Project</h3>
+      <canvas id="chart-uw   -pie"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>ðŸ“… Month-wise Summary</h3>
+    <table id="tbl-ul   -monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>ðŸ“‹ Project Details</h3>
+    <table id="tbl-z$-projects"></table>
+  </div>
+</div>
+Ú
+c                 S   s   g | ]}d |› d‘qS )zbuildCompanyPage('z');r   )r   rª   r   r   r   r–   k  s    ÿzbuild_html.<locals>.<listcomp>u|  <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OnealphaMed â€” Project Profit Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary:#1A3A52; --primary-light:#2E6DA4; --accent:#E74C3C;
+    --green:#27AE60; --orange:#F39C12; --bg:#F0F4F8; --card:#FFFFFF;
+    --border:#DDE2E8; --text:#1A252F; --muted:#7F8C8D; --sidebar-w:220px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+  #sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--primary);position:fixed;top:0;left:0;z-index:100;overflow-y:auto;display:flex;flex-direction:column;}
+  .sidebar-logo{padding:20px 16px 12px;border-bottom:1px solid rgba(255,255,255,0.12);}
+  .sidebar-logo h1{color:#fff;font-size:16px;font-weight:700;line-height:1.3;}
+  .sidebar-logo p{color:rgba(255,255,255,0.5);font-size:11px;margin-top:2px;}
+  .nav-section{padding:10px 0 4px;}
+  .nav-label{padding:6px 16px;color:rgba(255,255,255,0.4);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;color:rgba(255,255,255,0.75);cursor:pointer;transition:all 0.15s;font-size:13px;border-left:3px solid transparent;}
+  .nav-item:hover{background:rgba(255,255,255,0.07);color:#fff;}
+  .nav-item.active{background:rgba(255,255,255,0.12);color:#fff;border-left-color:#4FC3F7;font-weight:600;}
+  .nav-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  #main{margin-left:var(--sidebar-w);flex:1;padding:24px;}
+  .page{display:none;} .page.active{display:block;}
+  .page-header{background:var(--primary);color:#fff;border-radius:12px;padding:24px 28px;margin-bottom:20px;position:relative;overflow:hidden;}
+  .page-header::before{content:'';position:absolute;top:-30px;right:-30px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.04);}
+  .page-header h2{font-size:22px;font-weight:700;margin-bottom:4px;}
+  .page-header p{font-size:13px;color:rgba(255,255,255,0.65);}
+  .page-header .period-badge{display:inline-block;background:rgba(255,255,255,0.15);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-top:6px;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+  .kpi-card{background:var(--card);border-radius:10px;padding:18px 20px;border:1px solid var(--border);position:relative;overflow:hidden;}
+  .kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpi-color,#1A3A52);}
+  .kpi-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+  .kpi-value{font-size:22px;font-weight:700;color:var(--text);margin:6px 0 2px;}
+  .kpi-sub{font-size:11px;color:var(--muted);}
+  .kpi-icon{position:absolute;top:16px;right:16px;font-size:20px;opacity:0.2;}
+  .chart-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .chart-full{margin-bottom:16px;}
+  .chart-card{background:var(--card);border-radius:10px;padding:18px 20px;border:1px solid var(--border);}
+  .chart-card h3{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;}
+  .chart-card canvas{max-height:260px;} .chart-card.tall canvas{max-height:320px;}
+  .table-card{background:var(--card);border-radius:10px;padding:18px 20px;border:1px solid var(--border);margin-bottom:16px;overflow-x:auto;}
+  .table-card h3{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{background:#F7F9FC;padding:8px 10px;text-align:left;font-weight:700;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:2px solid var(--border);white-space:nowrap;}
+  td{padding:7px 10px;border-bottom:1px solid #F0F4F8;color:var(--text);}
+  tr:hover td{background:#FAFBFC;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;}
+  .badge-green{background:#D5F5E3;color:#1A6E37;} .badge-orange{background:#FDEBD0;color:#D35400;} .badge-red{background:#FADBD8;color:#C0392B;}
+  .co-header{border-radius:12px;padding:22px 28px;margin-bottom:20px;color:#fff;position:relative;overflow:hidden;}
+  .co-header::before{content:'';position:absolute;right:-20px;bottom:-20px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,0.07);}
+  .co-header h2{font-size:20px;font-weight:700;margin-bottom:4px;}
+  .co-header p{font-size:12px;opacity:0.7;}
+  .cat-mw{background:#D5F5E3;color:#1A6E37;} .cat-wt{background:#D6EAF8;color:#1F618D;} .cat-ev{background:#FDEBD0;color:#D35400;}
+  ::-webkit-scrollbar{width:5px;height:5px;} ::-webkit-scrollbar-track{background:#f0f4f8;} ::-webkit-scrollbar-thumb{background:#B2BEC3;border-radius:3px;}
+  .footer{text-align:center;padding:20px;color:var(--muted);font-size:11px;margin-top:10px;}
+  @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr);} .chart-grid-2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <h1>OnealphaMed</h1>
+    <p>Project Profit Dashboard</p>
+    <p style="margin-top:6px;color:rgba(255,255,255,0.3);font-size:10px;">Aug 2025 â€” Mar 2026</p>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" onclick="showPage('overview')"><span>ðŸ“Š</span> Dashboard Overview</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Companies</div>
+u`	    </div>
+  <div class="nav-section">
+    <div class="nav-label">Cost Analysis</div>
+    <div class="nav-item" onclick="showPage('vendors')"><span>ðŸ”§</span> Vendor Analysis</div>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- â•â•â• OVERVIEW â•â•â• -->
+<div id="page-overview" class="page active">
+  <div class="page-header">
+    <h2>ðŸ“Š Project Profit Dashboard</h2>
+    <p>Consolidated performance across all clients and projects</p>
+    <span class="period-badge">Aug 2025 â€” Mar 2026</span>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#1F618D">
+      <div class="kpi-icon">ðŸ’°</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-invoice">â€”</div><div class="kpi-sub">Across 12 companies</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">ðŸ“¦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-cost">â€”</div><div class="kpi-sub">All vendor &amp; operational costs</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">ðŸ“ˆ</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-profit">â€”</div><div class="kpi-sub">Net earnings</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">ðŸŽ¯</div><div class="kpi-label">Avg Profit Margin</div>
+      <div class="kpi-value" id="kpi-pct">â€”</div><div class="kpi-sub">Blended across all projects</div>
+    </div>
+  </div>
+  <div class="chart-full">
+    <div class="chart-card tall">
+      <h3>ðŸ“… Monthly Performance â€” Invoice vs Cost vs Profit (â‚¹)</h3>
+      <canvas id="chart-monthly-bar"></canvas>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <h3>ðŸ¢ Revenue Share by Company</h3>
+      <canvas id="chart-company-pie"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>ðŸ“ˆ Profit Margin Trend by Company (%)
+        <span style="font-size:10px;font-weight:400;color:#7F8C8D"> â€” click to filter</span>
+      </h3>
+      <div id="margin-filters" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px"></div>
+      <canvas id="chart-margin-trend"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>ðŸ“‹ Company Performance Summary</h3>
+    <table id="tbl-company-summary"></table>
+  </div>
+</div>
+
+uq  
+
+<!-- â•â•â• VENDOR â•â•â• -->
+<div id="page-vendors" class="page">
+  <div class="page-header" style="background:#2C3E50">
+    <h2>ðŸ”§ Vendor Cost Analysis</h2>
+    <p>Medical Writing Â· Webinar/Tech Â· Events &nbsp;|&nbsp; KOL/Doctor honorariums excluded</p>
+    <span class="period-badge">Aug 2025 â€” Mar 2026</span>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr)">
+    <div class="kpi-card" style="--kpi-color:#1A6E37">
+      <div class="kpi-icon">âœï¸</div><div class="kpi-label">Medical Writing</div>
+      <div class="kpi-value" id="kpi-vend-mw">â€”</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#1F618D">
+      <div class="kpi-icon">ðŸ–¥ï¸</div><div class="kpi-label">Webinar / Tech</div>
+      <div class="kpi-value" id="kpi-vend-wt">â€”</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#C0392B">
+      <div class="kpi-icon">ðŸŽª</div><div class="kpi-label">Events</div>
+      <div class="kpi-value" id="kpi-vend-ev">â€”</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#7D3C98">
+      <div class="kpi-icon">ðŸŽ¨</div><div class="kpi-label">Video / Graphic Design</div>
+      <div class="kpi-value" id="kpi-vend-vg">â€”</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#2C3E50">
+      <div class="kpi-icon">ðŸ’¸</div><div class="kpi-label">Total Vendor Cost</div>
+      <div class="kpi-value" id="kpi-vend-total">â€”</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+
+  <!-- â”€â”€ Top 3 Performers Overall â”€â”€ -->
+  <div class="table-card" style="margin-bottom:16px">
+    <h3>ðŸ† Top 3 Vendors Overall â€” by Total Cost</h3>
+    <div id="top3-overall" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:12px"></div>
+  </div>
+
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>ðŸ“… Monthly Vendor Cost â€” Stacked by Category (â‚¹)</h3>
+      <canvas id="chart-vend-monthly"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>ðŸ• Overall Vendor Category Split</h3>
+      <canvas id="chart-vend-pie"></canvas>
+    </div>
+  </div>
+  <div class="chart-full">
+    <div class="chart-card">
+      <h3>ðŸ¢ Vendor Costs by Company â€” Stacked Overview</h3>
+      <canvas id="chart-vend-company" style="max-height:220px"></canvas>
+    </div>
+  </div>
+
+  <!-- â”€â”€ Per-Company Vendor Pie Charts â”€â”€ -->
+  <div class="section-label" style="font-size:13px;font-weight:700;color:#2C3E50;margin:20px 0 10px;padding-left:4px;letter-spacing:0.3px;">
+    ðŸ¢ Which Company Uses Which Vendor â€” Individual Breakdown
+  </div>
+  <div id="company-vendor-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px"></div>
+
+  <!-- â”€â”€ Per-Category Breakdown â”€â”€ -->
+  <div class="section-label" style="font-size:13px;font-weight:700;color:#2C3E50;margin:20px 0 10px;padding-left:4px;letter-spacing:0.3px;">
+    ðŸ“‚ Vendor Breakdown by Category
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:16px">
+    <!-- Medical Writing -->
+    <div class="chart-card" style="border-top:3px solid #1A6E37">
+      <h3 style="color:#1A6E37">âœï¸ Medical Writing</h3>
+      <div id="top3-mw" style="margin-bottom:12px"></div>
+      <canvas id="chart-cat-mw"></canvas>
+    </div>
+    <!-- Webinar/Tech -->
+    <div class="chart-card" style="border-top:3px solid #1F618D">
+      <h3 style="color:#1F618D">ðŸ–¥ï¸ Webinar / Tech</h3>
+      <div id="top3-wt" style="margin-bottom:12px"></div>
+      <canvas id="chart-cat-wt"></canvas>
+    </div>
+    <!-- Events -->
+    <div class="chart-card" style="border-top:3px solid #C0392B">
+      <h3 style="color:#C0392B">ðŸŽª Events</h3>
+      <div id="top3-ev" style="margin-bottom:12px"></div>
+      <canvas id="chart-cat-ev"></canvas>
+    </div>
+    <!-- Video / Graphic Design -->
+    <div class="chart-card" style="border-top:3px solid #7D3C98">
+      <h3 style="color:#7D3C98">ðŸŽ¨ Video / Graphic Design</h3>
+      <div id="top3-vg" style="margin-bottom:12px"></div>
+      <canvas id="chart-cat-vg"></canvas>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <h3>ðŸ“… Month-wise Vendor Cost Breakdown</h3>
+    <table id="tbl-vend-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>ðŸ¢ Company-wise Vendor Cost Breakdown</h3>
+    <table id="tbl-vend-company"></table>
+  </div>
+</div>
+<style>
+  .cat-vg{background:#F5EEF8;color:#7D3C98;}
+</style>
+
+<div class="footer">OnealphaMed Â· Project Profit Dashboard Â· Aug 2025 â€“ Mar 2026 Â· All figures in INR (â‚¹)</div>
+</main>
+
+<script>
+const D = zL;
+const MONTHS = D.months;
+const COMPANIES = D.companies;
+const CO_COLORS = z;
+const CO_LIGHT  = uR\  ;
+
+// â”€â”€â”€ Utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function fmtL(n){
+  if(!n) return 'â€”';
+  if(n>=10000000) return 'â‚¹'+(n/10000000).toFixed(2)+'Cr';
+  if(n>=100000)   return 'â‚¹'+(n/100000).toFixed(2)+'L';
+  return 'â‚¹'+n.toLocaleString('en-IN',{maximumFractionDigits:0});
+}
+function fmtPct(n){ return n?(n*100).toFixed(1)+'%':'â€”'; }
+function pctBadge(p){
+  const cls=p>=0.7?'badge-green':p>=0.4?'badge-orange':'badge-red';
+  return `<span class="badge ${cls}">${(p*100).toFixed(1)}%</span>`;
+}
+function coId(co){ return 'co_'+co.toLowerCase().replace(/&/g,'and').replace(/ /g,'_'); }
+function setKpi(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
+
+// â”€â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pg=document.getElementById('page-'+name);
+  if(pg) pg.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+name+"'"))
+      n.classList.add('active');
+  });
+}
+
+// â”€â”€â”€ Chart helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const chartInst={};
+function makeChart(id,cfg){
+  if(chartInst[id]) chartInst[id].destroy();
+  const el=document.getElementById(id);
+  if(el) chartInst[id]=new Chart(el,cfg);
+}
+function yTick(v){ return v>=1e5?'â‚¹'+(v/1e5).toFixed(0)+'L':'â‚¹'+v.toLocaleString(); }
+
+function barConfig(labels,datasets){
+  return {type:'bar',data:{labels,datasets},options:{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10}}},
+      y:{grid:{color:'#F0F4F8'},ticks:{font:{size:10},callback:yTick}}
+    }
+  }};
+}
+function stackedBarConfig(labels,datasets){
+  return {type:'bar',data:{labels,datasets},options:{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},
+    scales:{
+      x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},
+      y:{stacked:true,grid:{color:'#F0F4F8'},ticks:{font:{size:10},callback:yTick}}
+    }
+  }};
+}
+function lineConfig(labels,datasets){
+  return {type:'line',data:{labels,datasets},options:{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10}}},
+      y:{grid:{color:'#F0F4F8'},min:0,max:1,ticks:{font:{size:10},callback:v=>(v*100).toFixed(0)+'%'}}
+    }
+  }};
+}
+function pieConfig(labels,data,colors){
+  return {type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{
+    responsive:true,maintainAspectRatio:true,cutout:'55%',
+    plugins:{
+      legend:{position:'right',labels:{font:{size:11},boxWidth:12,padding:10}},
+      tooltip:{callbacks:{label:ctx=>{
+        const tot=ctx.dataset.data.reduce((a,b)=>a+b,0);
+        return ` â‚¹${ctx.parsed.toLocaleString('en-IN',{maximumFractionDigits:0})} (${(ctx.parsed/tot*100).toFixed(1)}%)`;
+      }}}
+    }
+  }};
+}
+
+// â”€â”€â”€ Overview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function buildOverview(){
+  const g=D.grand;
+  setKpi('kpi-invoice',fmtL(g.invoice));
+  setKpi('kpi-cost',fmtL(g.cost));
+  setKpi('kpi-profit',fmtL(g.profit));
+  setKpi('kpi-pct',fmtPct(g.pct));
+
+  makeChart('chart-monthly-bar', barConfig(MONTHS,[
+    {label:'Invoice',data:D.monthly.invoice,backgroundColor:'rgba(46,134,171,0.85)',borderRadius:4},
+    {label:'Cost',   data:D.monthly.cost,   backgroundColor:'rgba(228,92,58,0.85)', borderRadius:4},
+    {label:'Profit', data:D.monthly.profit, backgroundColor:'rgba(39,174,96,0.85)', borderRadius:4},
+  ]));
+
+  makeChart('chart-company-pie', pieConfig(
+    COMPANIES,
+    COMPANIES.map(c=>D.company_totals[c].invoice),
+    COMPANIES.map(c=>CO_COLORS[c])
+  ));
+
+  // Filterable margin trend
+  let activeCompanies=new Set(COMPANIES);
+  function buildMarginChart(){
+    const ds=COMPANIES.map(co=>({
+      label:co, data:D.company_monthly[co].pct,
+      borderColor:CO_COLORS[co], backgroundColor:CO_COLORS[co]+'22',
+      tension:0.3, fill:false, pointRadius:4, pointHoverRadius:6, borderWidth:2.5,
+      hidden:!activeCompanies.has(co)
+    }));
+    makeChart('chart-margin-trend', lineConfig(MONTHS,ds));
+  }
+  const fd=document.getElementById('margin-filters');
+  const allBtn=document.createElement('button');
+  allBtn.textContent='All';
+  allBtn.style.cssText='padding:3px 10px;border-radius:12px;border:2px solid #1A3A52;background:#1A3A52;color:#fff;font-size:10px;font-weight:700;cursor:pointer;';
+  allBtn.onclick=()=>{
+    activeCompanies=new Set(COMPANIES);
+    document.querySelectorAll('.co-filter-btn').forEach(b=>{b.style.opacity='1';b.style.background=b.dataset.color;b.style.color='#fff';});
+    allBtn.style.background='#1A3A52'; allBtn.style.color='#fff';
+    buildMarginChart();
+  };
+  fd.appendChild(allBtn);
+  COMPANIES.forEach(co=>{
+    const btn=document.createElement('button');
+    btn.className='co-filter-btn'; btn.dataset.color=CO_COLORS[co]; btn.dataset.co=co;
+    btn.textContent=co;
+    btn.style.cssText=`padding:3px 10px;border-radius:12px;border:2px solid ${CO_COLORS[co]};background:${CO_COLORS[co]};color:#fff;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s;`;
+    btn.onclick=()=>{
+      if(activeCompanies.has(co)&&activeCompanies.size===1) return;
+      if(activeCompanies.size===COMPANIES.length){
+        activeCompanies=new Set([co]);
+        document.querySelectorAll('.co-filter-btn').forEach(b=>{
+          if(b.dataset.co!==co){b.style.opacity='0.35';b.style.background='#fff';b.style.color=b.dataset.color;}
+        });
+        allBtn.style.background='transparent'; allBtn.style.color='#1A3A52';
+      } else {
+        if(activeCompanies.has(co)){ activeCompanies.delete(co); btn.style.opacity='0.35';btn.style.background='#fff';btn.style.color=CO_COLORS[co]; }
+        else { activeCompanies.add(co); btn.style.opacity='1';btn.style.background=CO_COLORS[co];btn.style.color='#fff'; }
+      }
+      buildMarginChart();
+    };
+    fd.appendChild(btn);
+  });
+  buildMarginChart();
+
+  // Summary table
+  let h=`<thead><tr><th>Company</th><th class="num">Invoice</th><th class="num">Cost</th><th class="num">Profit</th><th class="num">Profit %</th></tr></thead><tbody>`;
+  COMPANIES.forEach(co=>{
+    const t=D.company_totals[co];
+    const dot=`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${CO_COLORS[co]};margin-right:6px"></span>`;
+    h+=`<tr><td>${dot}${co}</td><td class="num">${fmtL(t.invoice)}</td><td class="num">${fmtL(t.cost)}</td><td class="num" style="color:#27AE60;font-weight:600">${fmtL(t.profit)}</td><td class="num">${pctBadge(t.pct)}</td></tr>`;
+  });
+  const g2=D.grand;
+  h+=`<tr style="background:#F7F9FC;font-weight:700;border-top:2px solid #DDE2E8"><td>Grand Total</td><td class="num">${fmtL(g2.invoice)}</td><td class="num">${fmtL(g2.cost)}</td><td class="num" style="color:#27AE60">${fmtL(g2.profit)}</td><td class="num">${pctBadge(g2.pct)}</td></tr></tbody>`;
+  document.getElementById('tbl-company-summary').innerHTML=h;
+}
+
+// â”€â”€â”€ Company Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function buildCompanyPage(co){
+  const pid=coId(co), t=D.company_totals[co], cm=D.company_monthly[co], color=CO_COLORS[co];
+  setKpi(`kpi-${pid}-invoice`,fmtL(t.invoice));
+  setKpi(`kpi-${pid}-cost`,fmtL(t.cost));
+  setKpi(`kpi-${pid}-profit`,fmtL(t.profit));
+  setKpi(`kpi-${pid}-pct`,fmtPct(t.pct));
+
+  makeChart(`chart-${pid}-bar`, barConfig(MONTHS,[
+    {label:'Invoice',data:cm.invoice,backgroundColor:color+'CC',borderRadius:4},
+    {label:'Cost',   data:cm.cost,   backgroundColor:'rgba(228,92,58,0.8)',borderRadius:4},
+    {label:'Profit', data:cm.profit, backgroundColor:'rgba(39,174,96,0.8)',borderRadius:4},
+  ]));
+
+  const projs=D.projects[co], projTotals={};
+  projs.forEach(p=>{ projTotals[p.Project]=(projTotals[p.Project]||0)+p.Invoice; });
+  const sorted=Object.entries(projTotals).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const pal=['#2E86AB','#E45C3A','#2ECC71','#F39C12','#9B59B6','#1ABC9C','#E74C3C','#95A5A6'];
+  makeChart(`chart-${pid}-pie`, pieConfig(
+    sorted.map(x=>x[0].length>18?x[0].slice(0,18)+'â€¦':x[0]),
+    sorted.map(x=>x[1]), pal
+  ));
+
+  let h=`<thead><tr><th>Month</th><th class="num">Invoiced (â‚¹)</th><th class="num">Cost (â‚¹)</th><th class="num">Profit (â‚¹)</th><th class="num">Profit %</th></tr></thead><tbody>`;
+  MONTHS.forEach((m,i)=>{
+    const inv=cm.invoice[i],cost=cm.cost[i],prof=cm.profit[i],pct=cm.pct[i];
+    if(!inv) return;
+    h+=`<tr><td><strong>${m}</strong></td><td class="num">${fmtL(inv)}</td><td class="num">${fmtL(cost)}</td><td class="num" style="color:#27AE60;font-weight:600">${fmtL(prof)}</td><td class="num">${pctBadge(pct)}</td></tr>`;
+  });
+  h+=`<tr style="background:#F7F9FC;font-weight:700;border-top:2px solid #DDE2E8"><td>Total</td><td class="num">${fmtL(t.invoice)}</td><td class="num">${fmtL(t.cost)}</td><td class="num" style="color:#27AE60">${fmtL(t.profit)}</td><td class="num">${pctBadge(t.pct)}</td></tr></tbody>`;
+  document.getElementById(`tbl-${pid}-monthly`).innerHTML=h;
+
+  const mOrd={"Aug'25":1,"Sept'25":2,"Oct'25":3,"Nov'25":4,"Dec'25":5,"Jan'26":6,"Feb'26":7,"Mar'26":8};
+  const sP=[...projs].sort((a,b)=>(mOrd[a.Month]-mOrd[b.Month])||b.Invoice-a.Invoice);
+  let h2=`<thead><tr><th>Month</th><th>Project</th><th class="num">Invoiced</th><th class="num">Cost</th><th class="num">Profit</th><th class="num">Profit %</th></tr></thead><tbody>`;
+  sP.forEach(p=>{
+    h2+=`<tr><td style="white-space:nowrap">${p.Month}</td><td>${p.Project}</td><td class="num">${fmtL(p.Invoice)}</td><td class="num">${fmtL(p.Cost)}</td><td class="num" style="color:#27AE60;font-weight:600">${fmtL(p.Profit)}</td><td class="num">${pctBadge(Math.min(p.ProfitPct,1))}</td></tr>`;
+  });
+  document.getElementById(`tbl-${pid}-projects`).innerHTML=h2+'</tbody>';
+}
+
+// â”€â”€â”€ Vendor Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function buildVendorPage(){
+  const v=D.vendor;
+  const totMW=v.totals['Medical Writing'], totWT=v.totals['Webinar/Tech'],
+        totEV=v.totals['Events'],          totVG=v.totals['Video/Graphic Design']||0;
+  const totAll=totMW+totWT+totEV+totVG;
+  setKpi('kpi-vend-mw',fmtL(totMW)); setKpi('kpi-vend-wt',fmtL(totWT));
+  setKpi('kpi-vend-ev',fmtL(totEV)); setKpi('kpi-vend-vg',fmtL(totVG));
+  setKpi('kpi-vend-total',fmtL(totAll));
+
+  // â”€â”€ Top 3 Overall â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const medals=['ðŸ¥‡','ðŸ¥ˆ','ðŸ¥‰'];
+  const catColors={'Medical Writing':'#1A6E37','Webinar/Tech':'#1F618D','Events':'#C0392B','Video/Graphic Design':'#7D3C98','Other':'#7F8C8D'};
+  const catBg={'Medical Writing':'#D5F5E3','Webinar/Tech':'#D6EAF8','Events':'#FDEBD0','Video/Graphic Design':'#F5EEF8','Other':'#F0F4F8'};
+  const overall=document.getElementById('top3-overall');
+  overall.innerHTML='';
+  (v.top3_overall||[]).forEach((item,i)=>{
+    const color=catColors[item.cat]||'#555';
+    const bg=catBg[item.cat]||'#eee';
+    overall.innerHTML+=`
+      <div style="background:#fff;border-radius:10px;padding:16px 18px;border:1px solid #DDE2E8;border-top:3px solid ${color};display:flex;align-items:flex-start;gap:12px">
+        <div style="font-size:28px;line-height:1">${medals[i]}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;color:#1A252F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${item.name}">${item.name}</div>
+          <div style="font-size:20px;font-weight:800;color:${color};margin:4px 0 6px">${fmtL(item.cost)}</div>
+          <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:${bg};color:${color}">${item.cat}</span>
+        </div>
+      </div>`;
+  });
+
+  // â”€â”€ Main charts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  makeChart('chart-vend-monthly', stackedBarConfig(MONTHS,[
+    {label:'Medical Writing',      data:v.monthly['Medical Writing'],      backgroundColor:'rgba(26,110,55,0.85)',  borderRadius:2},
+    {label:'Webinar/Tech',          data:v.monthly['Webinar/Tech'],          backgroundColor:'rgba(31,97,141,0.85)',  borderRadius:2},
+    {label:'Events',                data:v.monthly['Events'],                backgroundColor:'rgba(192,57,43,0.85)', borderRadius:2},
+    {label:'Video/Graphic Design',  data:v.monthly['Video/Graphic Design']||MONTHS.map(()=>0), backgroundColor:'rgba(125,60,152,0.85)', borderRadius:2},
+  ]));
+  makeChart('chart-vend-pie', pieConfig(
+    ['Medical Writing','Webinar/Tech','Events','Video/Graphic Design'],
+    [totMW,totWT,totEV,totVG],
+    ['#1A6E37','#1F618D','#C0392B','#7D3C98']
+  ));
+  makeChart('chart-vend-company', stackedBarConfig(COMPANIES,[
+    {label:'Medical Writing',     data:COMPANIES.map(c=>v.by_company[c]['Medical Writing']),     backgroundColor:'rgba(26,110,55,0.8)',  borderRadius:3},
+    {label:'Webinar/Tech',         data:COMPANIES.map(c=>v.by_company[c]['Webinar/Tech']),         backgroundColor:'rgba(31,97,141,0.8)',  borderRadius:3},
+    {label:'Events',               data:COMPANIES.map(c=>v.by_company[c]['Events']),               backgroundColor:'rgba(192,57,43,0.8)', borderRadius:3},
+    {label:'Video/Graphic Design', data:COMPANIES.map(c=>(v.by_company[c]['Video/Graphic Design']||0)), backgroundColor:'rgba(125,60,152,0.8)', borderRadius:3},
+  ]));
+
+  // â”€â”€ Per-company vendor breakdown pie charts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const CATS4=['Medical Writing','Webinar/Tech','Events','Video/Graphic Design'];
+  const CAT4_COLORS=['#1A6E37','#1F618D','#C0392B','#7D3C98'];
+  const CAT4_BG=['#D5F5E3','#D6EAF8','#FDEBD0','#F5EEF8'];
+  const CAT4_ICONS=['âœï¸','ðŸ–¥ï¸','ðŸŽª','ðŸŽ¨'];
+  const grid=document.getElementById('company-vendor-grid');
+  grid.innerHTML='';
+  COMPANIES.forEach(co=>{
+    const vc=v.by_company[co];
+    const vals=CATS4.map(c=>vc[c]||0);
+    const coTotal=vals.reduce((a,b)=>a+b,0);
+    if(!coTotal) return;  // skip companies with no vendor spend
+    const cid='vend-co-'+co.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    // Which categories are actually used
+    const usedLabels=[], usedVals=[], usedColors=[], usedBg=[], usedIcons=[];
+    CATS4.forEach((cat,i)=>{
+      if(vals[i]>0){
+        usedLabels.push(cat); usedVals.push(vals[i]);
+        usedColors.push(CAT4_COLORS[i]); usedBg.push(CAT4_BG[i]); usedIcons.push(CAT4_ICONS[i]);
+      }
+    });
+    // Build breakdown legend
+    let legend='';
+    usedLabels.forEach((cat,i)=>{
+      const pct=(usedVals[i]/coTotal*100).toFixed(1);
+      legend+=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:10px">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${usedColors[i]};flex-shrink:0"></span>
+        <span style="flex:1;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${usedIcons[i]} ${cat}</span>
+        <span style="font-weight:700;color:${usedColors[i]};white-space:nowrap">${fmtL(usedVals[i])}</span>
+        <span style="color:#999">(${pct}%)</span>
+      </div>`;
+    });
+    grid.innerHTML+=`
+      <div class="chart-card" style="border-top:3px solid ${CO_COLORS[co]||'#999'}">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+          <span style="width:10px;height:10px;border-radius:50%;background:${CO_COLORS[co]};display:inline-block;flex-shrink:0"></span>
+          <span style="font-size:12px;font-weight:700;color:#1A252F">${co}</span>
+          <span style="margin-left:auto;font-size:11px;font-weight:700;color:#7F8C8D">${fmtL(coTotal)}</span>
+        </div>
+        <canvas id="${cid}" style="max-height:160px"></canvas>
+        <div style="margin-top:10px">${legend}</div>
+      </div>`;
+  });
+  // Render each donut after DOM is updated
+  COMPANIES.forEach(co=>{
+    const vc=v.by_company[co];
+    const vals=CATS4.map(c=>vc[c]||0);
+    const coTotal=vals.reduce((a,b)=>a+b,0);
+    if(!coTotal) return;
+    const cid='vend-co-'+co.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    const usedLabels=[], usedVals=[], usedColors=[];
+    CATS4.forEach((cat,i)=>{ if(vals[i]>0){ usedLabels.push(cat); usedVals.push(vals[i]); usedColors.push(CAT4_COLORS[i]); } });
+    makeChart(cid, {
+      type:'doughnut',
+      data:{ labels:usedLabels, datasets:[{
+        data:usedVals, backgroundColor:usedColors,
+        borderWidth:2, borderColor:'#fff', hoverOffset:5
+      }]},
+      options:{
+        responsive:true, maintainAspectRatio:true, cutout:'60%',
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>{
+            const tot=ctx.dataset.data.reduce((a,b)=>a+b,0);
+            return ` ${fmtL(ctx.parsed)} (${(ctx.parsed/tot*100).toFixed(1)}%)`;
+          }}}
+        }
+      }
+    });
+  });
+
+  // â”€â”€ Per-category top 3 + horizontal bar charts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const catCfg=[
+    {key:'Medical Writing',     divId:'top3-mw', chartId:'chart-cat-mw', color:'#1A6E37', bg:'#D5F5E3'},
+    {key:'Webinar/Tech',        divId:'top3-wt', chartId:'chart-cat-wt', color:'#1F618D', bg:'#D6EAF8'},
+    {key:'Events',              divId:'top3-ev', chartId:'chart-cat-ev', color:'#C0392B', bg:'#FDEBD0'},
+    {key:'Video/Graphic Design',divId:'top3-vg', chartId:'chart-cat-vg', color:'#7D3C98', bg:'#F5EEF8'},
+  ];
+  catCfg.forEach(cfg=>{
+    const top3 = (v.top3_by_cat||{})[cfg.key]||[];
+    const all  = (v.all_by_cat||{})[cfg.key]||[];
+    const div  = document.getElementById(cfg.divId);
+    div.innerHTML='<div style="font-size:10px;font-weight:700;color:#7F8C8D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Top 3 by Cost</div>';
+    top3.forEach((item,i)=>{
+      const pct = all[0]&&all[0].cost>0 ? item.cost/all[0].cost : 0;
+      div.innerHTML+=`
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:14px">${medals[i]}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;font-weight:600;color:#1A252F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${item.name}">${item.name}</div>
+            <div style="height:4px;background:#F0F4F8;border-radius:2px;margin-top:3px">
+              <div style="height:4px;background:${cfg.color};border-radius:2px;width:${(pct*100).toFixed(1)}%"></div>
+            </div>
+          </div>
+          <span style="font-size:11px;font-weight:700;color:${cfg.color};white-space:nowrap">${fmtL(item.cost)}</span>
+        </div>`;
+    });
+    if(all.length>0){
+      makeChart(cfg.chartId, {
+        type:'bar',
+        data:{
+          labels: all.map(x=>x.name.length>16?x.name.slice(0,16)+'â€¦':x.name),
+          datasets:[{
+            label:'Cost (â‚¹)', data:all.map(x=>x.cost),
+            backgroundColor: all.map((_,i)=>i<3?cfg.color+'EE':cfg.color+'55'),
+            borderRadius:4,
+          }]
+        },
+        options:{
+          indexAxis:'y', responsive:true, maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmtL(ctx.parsed.x)}}},
+          scales:{
+            x:{grid:{color:'#F0F4F8'},ticks:{font:{size:9},callback:yTick}},
+            y:{grid:{display:false},ticks:{font:{size:9}}}
+          }
+        }
+      });
+      const el=document.getElementById(cfg.chartId);
+      if(el) el.style.height = Math.max(100, all.length*30)+'px';
+    }
+  });
+
+  // â”€â”€ Tables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  let h=`<thead><tr><th>Month</th><th class="num">Medical Writing</th><th class="num">Webinar/Tech</th><th class="num">Events</th><th class="num">Video/Graphic</th><th class="num">Total</th></tr></thead><tbody>`;
+  MONTHS.forEach((m,i)=>{
+    const mw=v.monthly['Medical Writing'][i], wt=v.monthly['Webinar/Tech'][i],
+          ev=v.monthly['Events'][i],           vg=(v.monthly['Video/Graphic Design']||[])[i]||0;
+    const tt=mw+wt+ev+vg;
+    if(!tt) return;
+    h+=`<tr><td><strong>${m}</strong></td>
+      <td class="num"><span class="badge cat-mw">${mw?fmtL(mw):'â€”'}</span></td>
+      <td class="num"><span class="badge cat-wt">${wt?fmtL(wt):'â€”'}</span></td>
+      <td class="num"><span class="badge cat-ev">${ev?fmtL(ev):'â€”'}</span></td>
+      <td class="num"><span class="badge cat-vg">${vg?fmtL(vg):'â€”'}</span></td>
+      <td class="num"><strong>${fmtL(tt)}</strong></td></tr>`;
+  });
+  h+=`<tr style="background:#F7F9FC;font-weight:700;border-top:2px solid #DDE2E8"><td>Total</td><td class="num">${fmtL(totMW)}</td><td class="num">${fmtL(totWT)}</td><td class="num">${fmtL(totEV)}</td><td class="num">${fmtL(totVG)}</td><td class="num">${fmtL(totAll)}</td></tr></tbody>`;
+  document.getElementById('tbl-vend-monthly').innerHTML=h;
+
+  let h2=`<thead><tr><th>Company</th><th class="num">Medical Writing</th><th class="num">Webinar/Tech</th><th class="num">Events</th><th class="num">Video/Graphic</th><th class="num">Total</th><th class="num">% Share</th></tr></thead><tbody>`;
+  COMPANIES.forEach(co=>{
+    const vc=v.by_company[co];
+    const mw=vc['Medical Writing'], wt=vc['Webinar/Tech'], ev=vc['Events'], vg=vc['Video/Graphic Design']||0;
+    const tt=mw+wt+ev+vg;
+    if(!tt) return;
+    const dot=`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${CO_COLORS[co]};margin-right:6px"></span>`;
+    h2+=`<tr><td>${dot}${co}</td><td class="num">${mw?fmtL(mw):'â€”'}</td><td class="num">${wt?fmtL(wt):'â€”'}</td><td class="num">${ev?fmtL(ev):'â€”'}</td><td class="num">${vg?fmtL(vg):'â€”'}</td><td class="num"><strong>${fmtL(tt)}</strong></td><td class="num">${pctBadge(tt/totAll)}</td></tr>`;
+  });
+  document.getElementById('tbl-vend-company').innerHTML=h2+'</tbody>';
+}
+
+// â”€â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+buildOverview();
+z-
+buildVendorPage();
+</script>
+</body>
+</html>)ÚjsonÚdumpsr²   r/   r    Ú	CO_COLORSÚjoinÚCO_LIGHT)	r»   Úraw_dataÚ	nav_itemsrª   ÚpgÚ
+company_pagesÚcolÚ
+build_callsÚhtmlr   r   r   Ú
+build_html+  s    ÿÿÿ ÿþý ù	÷
+óïëåá$Ü(Ø
+.ÿM³ 	 ÷ v Š y ‡ z †          ñ     rØ   c                  C   s>  t } ttjƒdkrttjd ƒ} |  ¡ s'td| › ƒ tdt › ƒ t  d¡ tdd› ƒ tdƒ td› ƒ td ƒ t| ƒ\}}tdƒ t	||ƒ}td	|d
+ d
+ d›ƒ td
+tt
+ƒ› ƒ tdtt
+ƒ› ƒ tdƒ t|ƒ}t
+j|dd t
+ ¡ jd }tdt
+j› d|d›dƒ tdd› ƒ tdƒ td› dƒ d S )Nr   z ERROR: Excel file not found at: z#       Place your Excel file here: rË   z7=======================================================z!  OnealphaMed Dashboard Generatorz!
+[1/3] Loading data from Excel...z
+[2/3] Building data model...u     Grand total invoice : â‚¹r±   r˜   z,.0fz  Companies           : z  Months covered      : z#
+[3/3] Generating HTML dashboard...zutf-8)Úencodingi   z
+  Output: z  (z.0fz KB)u&     âœ…  Dashboard updated successfully!)Ú
+EXCEL_FILErx   ÚsysÚargvr   Úexistsrp   ÚexitrŽ   rÄ   r²   r¦   rØ   Ú
+OUTPUT_HTMLÚ
+write_textÚstatÚ st_sizer    )ry   rŒ   r   r»   r×   Ú size_kbr   r   r   Úmain  s2   
+
+
+rä   Ú__main__)Ú __doc__Úpandasr   r!   rÌ   rÛ   ÚosÚ pathlibr   Ú__file__ÚparentÚ
+SCRIPT_DIRrÚ   rß   r¦   Ú	enumerateru   r²   rÎ   rÐ   r%   r5   rA   r]   rŽ   rÄ   rØ   rä   Ú__name__r   r   r   r   Ú<module>   sn   
+
+ôô
+>_     \"
+ÿ
