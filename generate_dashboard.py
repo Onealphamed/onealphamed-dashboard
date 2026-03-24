@@ -25,7 +25,7 @@ OUTPUT_HTML  = SCRIPT_DIR / "OnealphaMed_Dashboard.html"
 MONTHS       = ["Aug'25","Sept'25","Oct'25","Nov'25","Dec'25","Jan'26","Feb'26","Mar'26"]
 MONTH_ORDER  = {m: i+1 for i, m in enumerate(MONTHS)}
 COMPANIES    = ['Hetero','Bayer','Lupin','P&G','Cipla','Aurobindo','NovoNordisk',
-                'Zydus','KOITA','Amneal','Resmed','Sun Pharma']
+              'KOITA','Amneal','Resmed','Sun Pharma']
 
 CO_COLORS = {
     'Hetero':      '#C0392B',
