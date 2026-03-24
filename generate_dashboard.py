@@ -10,11 +10,16 @@ GitHub Action: triggered automatically when you push the Excel file
 """
 
 import pandas as pd
-import re
-import json
-import sys
 import os
+import re
 from pathlib import Path
+import gspread
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+import pickle
+import json
+
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
 # ─── PATHS ────────────────────────────────────────────────────────────────────
 SCRIPT_DIR   = Path(__file__).parent
@@ -140,19 +145,20 @@ def get_vendor_cat(vendor):
     return 'Other'
 
 def load_and_process(excel_path):
-    print(f"  Reading from Google Sheet...")
+    print("  Reading from Google Sheet...")
 
-    SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vREyVh4WgjdeLU2htB2W1nXZIc97OErhjd9ATBpchQaamqFc7iY9eXGNCquAG9N2_o-yoXgxb--XJB4/pub?output=csv"
+    df = load_from_google_sheet()
+    df = df.astype(str)
 
-    df = pd.read_csv(SHEET_URL, dtype=str)
-
-    # ✅ DEBUG (as requested)
+    # ✅ DEBUG
     print("Columns in sheet:", df.columns.tolist())
 
-    # ⚠️ KEEPING YOUR ORIGINAL STRUCTURE (NO CHANGE)
-    df.columns = ['Project Name', 'Client', 'Month', 'Vendor', 'Vendor Type',
-                  'Cost', 'Total Cost', 'Invoice Amount',
-                  'Project Profit', 'Invoice Raised Date', 'Project Profitability']
+    # ⚠️ KEEPING YOUR ORIGINAL STRUCTURE
+    df.columns = [
+        'Project Name', 'Client', 'Month', 'Vendor', 'Vendor Type',
+        'Cost', 'Total Cost', 'Invoice Amount',
+        'Project Profit', 'Invoice Raised Date', 'Project Profitability'
+    ]
 
     # Project-level rows
     project_rows = []
@@ -1071,37 +1077,70 @@ buildVendorPage();
 </html>"""
     return html
 
+def get_gsheet_client():
+    creds = None
+
+    if os.path.exists("token.pickle"):
+        with open("token.pickle", "rb") as token:
+            creds = pickle.load(token)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                "client_secret.json", SCOPES
+            )
+            creds = flow.run_local_server(port=0)
+
+        with open("token.pickle", "wb") as token:
+            pickle.dump(creds, token)
+
+    return gspread.authorize(creds)
+
+def load_from_google_sheet():
+    client = get_gsheet_client()
+
+    sheet = client.open_by_url(
+        "https://docs.google.com/spreadsheets/d/1sxHMxejRHIjUqPYgj5UxCVxz9ljrVA69jSxaiOxE3d4/edit"
+    ).sheet1
+
+    data = sheet.get_all_records()
+
+    df = pd.DataFrame(data)
+
+    return df
+
 # ─── MAIN ─────────────────────────────────────────────────────────────────────
 def main():
-    excel_path = EXCEL_FILE
-
-    # Allow passing a custom Excel path as argument
-    if len(sys.argv) > 1:
-        excel_path = Path(sys.argv[1])
-
     print("Using Google Sheet as data source...")
 
     print(f"\n{'='*55}")
     print("  OnealphaMed Dashboard Generator")
     print(f"{'='*55}")
-    print(f"\n[1/3] Loading data from Excel...")
-    proj_df, vend_df = load_and_process(excel_path)
+
+    print(f"\n[1/3] Loading data from Google Sheet...")
+    proj_df, vend_df = load_and_process(None)
 
     print(f"\n[2/3] Building data model...")
     data = build_data_object(proj_df, vend_df)
+
     print(f"  Grand total invoice : ₹{data['grand']['invoice']:,.0f}")
     print(f"  Companies           : {len(COMPANIES)}")
     print(f"  Months covered      : {len(MONTHS)}")
 
     print(f"\n[3/3] Generating HTML dashboard...")
     html = build_html(data)
+
     OUTPUT_HTML.write_text(html, encoding='utf-8')
     size_kb = OUTPUT_HTML.stat().st_size / 1024
+
     print(f"  Output: {OUTPUT_HTML.name}  ({size_kb:.0f} KB)")
 
     print(f"\n{'='*55}")
     print("  ✅  Dashboard updated successfully!")
     print(f"{'='*55}\n")
+
 
 if __name__ == "__main__":
     main()
