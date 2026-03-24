@@ -140,64 +140,93 @@ def get_vendor_cat(vendor):
     return 'Other'
 
 def load_and_process(excel_path):
-    print(f"  Reading: {excel_path}")
-    df = pd.read_excel(excel_path, sheet_name=0, dtype=str)
-    df.columns = ['Project Name', 'Client', 'Month', 'Vendor', 'Tasked Assigned',
-                  'Cost', 'Total Cost', 'PO Value', 'Invoice Amount',
-                  'Project Profit', 'PO', 'Invoice Raised Date', 'Project Profitability']
+    print(f"  Reading from Google Sheet...")
 
-    # Project-level rows (rows that carry an Invoice Amount)
+    SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vREyVh4WgjdeLU2htB2W1nXZIc97OErhjd9ATBpchQaamqFc7iY9eXGNCquAG9N2_o-yoXgxb--XJB4/pub?output=csv"
+
+    df = pd.read_csv(SHEET_URL, dtype=str)
+
+    # ✅ DEBUG (as requested)
+    print("Columns in sheet:", df.columns.tolist())
+
+    # ⚠️ KEEPING YOUR ORIGINAL STRUCTURE (NO CHANGE)
+    df.columns = ['Project Name', 'Client', 'Month', 'Vendor', 'Vendor Type',
+                  'Cost', 'Total Cost', 'Invoice Amount',
+                  'Project Profit', 'Invoice Raised Date', 'Project Profitability']
+
+    # Project-level rows
     project_rows = []
     for _, row in df.iterrows():
         pname  = str(row['Project Name']).strip()
         client = str(row['Client']).strip()
         month  = str(row['Month']).strip()
+
         if pname in ['TOTAL', 'nan', 'None'] or month in ['nan', 'None']:
             continue
+
         inv = clean_num(row['Invoice Amount'])
         if inv == 0:
             continue
+
         company = get_company(client, pname)
         if company is None:
             continue
+
         cost   = clean_num(row['Total Cost'])
         profit = clean_num(row['Project Profit'])
+
         if profit == 0 and inv > 0:
             profit = inv - cost
+
         pct = profit / inv if inv > 0 else 0
+
         project_rows.append({
-            'Project': pname, 'Client': client, 'Company': company,
-            'Month': month, 'MonthOrder': MONTH_ORDER.get(month, 0),
-            'Invoice': inv, 'Cost': cost, 'Profit': profit, 'ProfitPct': pct
+            'Project': pname,
+            'Client': client,
+            'Company': company,
+            'Month': month,
+            'MonthOrder': MONTH_ORDER.get(month, 0),
+            'Invoice': inv,
+            'Cost': cost,
+            'Profit': profit,
+            'ProfitPct': pct
         })
 
-    # Vendor-level rows (individual cost lines, excluding Prof/Dr)
+    # Vendor-level rows
     vendor_rows = []
     cur_proj = cur_client = cur_month = cur_co = None
+
     for _, row in df.iterrows():
         pname  = str(row['Project Name']).strip()
         client = str(row['Client']).strip()
         month  = str(row['Month']).strip()
         vendor = str(row['Vendor']).strip()
         cost   = clean_num(row['Cost'])
+
         if pname not in ['nan', 'None', 'TOTAL'] and month not in ['nan', 'None']:
             comp = get_company(client, pname)
             if comp:
                 cur_proj = pname
                 cur_month = month
                 cur_co = comp
+
         if cost > 0 and vendor not in ['nan', 'None', '-', ''] and cur_month:
             cat = get_vendor_cat(vendor)
             if cat:
                 vendor_rows.append({
-                    'Project': cur_proj, 'Company': cur_co,
-                    'Month': cur_month, 'Vendor': normalize_vendor(vendor),
-                    'Category': cat, 'Cost': cost
+                    'Project': cur_proj,
+                    'Company': cur_co,
+                    'Month': cur_month,
+                    'Vendor': normalize_vendor(vendor),
+                    'Category': cat,
+                    'Cost': cost
                 })
 
     proj_df = pd.DataFrame(project_rows)
     vend_df = pd.DataFrame(vendor_rows)
+
     print(f"  Projects loaded: {len(proj_df)} | Vendor entries: {len(vend_df)}")
+
     return proj_df, vend_df
 
 # ─── STEP 2: BUILD DATA OBJECT ────────────────────────────────────────────────
@@ -1050,10 +1079,7 @@ def main():
     if len(sys.argv) > 1:
         excel_path = Path(sys.argv[1])
 
-    if not excel_path.exists():
-        print(f"ERROR: Excel file not found at: {excel_path}")
-        print(f"       Place your Excel file here: {EXCEL_FILE}")
-        sys.exit(1)
+    print("Using Google Sheet as data source...")
 
     print(f"\n{'='*55}")
     print("  OnealphaMed Dashboard Generator")
