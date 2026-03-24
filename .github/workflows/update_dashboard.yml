@@ -1,0 +1,46 @@
+name: Update Dashboard
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Triggers automatically whenever "Project Profit.xlsx" is pushed to the repo.
+# Also runnable manually from the Actions tab.
+# ──────────────────────────────────────────────────────────────────────────────
+on:
+  push:
+    paths:
+      - "Project Profit.xlsx"   # only runs when the Excel file changes
+  workflow_dispatch:             # lets you trigger it manually from GitHub UI
+
+permissions:
+  contents: write                # needed to commit the updated HTML back
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+
+      # 1. Check out the repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # 4. Run the dashboard generator
+      - name: Generate dashboard
+        run: python generate_dashboard.py
+
+      # 5. Commit & push the updated HTML back to the repo
+      - name: Commit updated dashboard
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add OnealphaMed_Dashboard.html
+          git diff --staged --quiet || git commit -m "Auto-update dashboard from Excel [skip ci]"
+          git push
