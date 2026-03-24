@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OnealphaMed — Project Profit Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary:#1A3A52; --primary-light:#2E6DA4; --accent:#E74C3C;
+    --green:#27AE60; --orange:#F39C12; --bg:#F0F4F8; --card:#FFFFFF;
+    --border:#DDE2E8; --text:#1A252F; --muted:#7F8C8D; --sidebar-w:220px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+  #sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--primary);position:fixed;top:0;left:0;z-index:100;overflow-y:auto;display:flex;flex-direction:column;}
+  .sidebar-logo{padding:20px 16px 12px;border-bottom:1px solid rgba(255,255,255,0.12);}
+  .sidebar-logo h1{color:#fff;font-size:16px;font-weight:700;line-height:1.3;}
+  .sidebar-logo p{color:rgba(255,255,255,0.5);font-size:11px;margin-top:2px;}
+  .nav-section{padding:10px 0 4px;}
+  .nav-label{padding:6px 16px;color:rgba(255,255,255,0.4);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;color:rgba(255,255,255,0.75);cursor:pointer;transition:all 0.15s;font-size:13px;border-left:3px solid transparent;}
+  .nav-item:hover{background:rgba(255,255,255,0.07);color:#fff;}
+  .nav-item.active{background:rgba(255,255,255,0.12);color:#fff;border-left-color:#4FC3F7;font-weight:600;}
+  .nav-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  #main{margin-left:var(--sidebar-w);flex:1;padding:24px;}
+  .page{display:none;} .page.active{display:block;}
+  .page-header{background:var(--primary);color:#fff;border-radius:12px;padding:24px 28px;margin-bottom:20px;position:relative;overflow:hidden;}
+  .page-header::before{content:'';position:absolute;top:-30px;right:-30px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.04);}
+  .page-header h2{font-size:22px;font-weight:700;margin-bottom:4px;}
+  .page-header p{font-size:13px;color:rgba(255,255,255,0.65);}
+  .page-header .period-badge{display:inline-block;background:rgba(255,255,255,0.15);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-top:6px;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+  .kpi-card{background:var(--card);border-radius:10px;padding:18px 20px;border:1px solid var(--border);position:relative;overflow:hidden;}
+  .kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpi-color,#1A3A52);}
+  .kpi-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+  .kpi-value{font-size:22px;font-weight:700;color:var(--text);margin:6px 0 2px;}
+  .kpi-sub{font-size:11px;color:var(--muted);}
+  .kpi-icon{position:absolute;top:16px;right:16px;font-size:20px;opacity:0.2;}
+  .chart-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .chart-full{margin-bottom:16px;}
+  .chart-card{background:var(--card);border-radius:10px;padding:18px 20px;border:1px solid var(--border);}
+  .chart-card h3{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;}
+  .chart-card canvas{max-height:260px;} .chart-card.tall canvas{max-height:320px;}
+  .table-card{background:var(--card);border-radius:10px;padding:18px 20px;border:1px solid var(--border);margin-bottom:16px;overflow-x:auto;}
+  .table-card h3{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{background:#F7F9FC;padding:8px 10px;text-align:left;font-weight:700;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:2px solid var(--border);white-space:nowrap;}
+  td{padding:7px 10px;border-bottom:1px solid #F0F4F8;color:var(--text);}
+  tr:hover td{background:#FAFBFC;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;}
+  .badge-green{background:#D5F5E3;color:#1A6E37;} .badge-orange{background:#FDEBD0;color:#D35400;} .badge-red{background:#FADBD8;color:#C0392B;}
+  .co-header{border-radius:12px;padding:22px 28px;margin-bottom:20px;color:#fff;position:relative;overflow:hidden;}
+  .co-header::before{content:'';position:absolute;right:-20px;bottom:-20px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,0.07);}
+  .co-header h2{font-size:20px;font-weight:700;margin-bottom:4px;}
+  .co-header p{font-size:12px;opacity:0.7;}
+  .cat-mw{background:#D5F5E3;color:#1A6E37;} .cat-wt{background:#D6EAF8;color:#1F618D;} .cat-ev{background:#FDEBD0;color:#D35400;}
+  ::-webkit-scrollbar{width:5px;height:5px;} ::-webkit-scrollbar-track{background:#f0f4f8;} ::-webkit-scrollbar-thumb{background:#B2BEC3;border-radius:3px;}
+  .footer{text-align:center;padding:20px;color:var(--muted);font-size:11px;margin-top:10px;}
+  @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr);} .chart-grid-2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <h1>OnealphaMed</h1>
+    <p>Project Profit Dashboard</p>
+    <p style="margin-top:6px;color:rgba(255,255,255,0.3);font-size:10px;">Aug 2025 — Mar 2026</p>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" onclick="showPage('overview')"><span>📊</span> Dashboard Overview</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Companies</div>
+    <div class="nav-item" onclick="showPage('co_hetero')">
+      <span class="nav-dot" style="background:#C0392B"></span> Hetero
+    </div>
+    <div class="nav-item" onclick="showPage('co_bayer')">
+      <span class="nav-dot" style="background:#1A6E37"></span> Bayer
+    </div>
+    <div class="nav-item" onclick="showPage('co_lupin')">
+      <span class="nav-dot" style="background:#1F618D"></span> Lupin
+    </div>
+    <div class="nav-item" onclick="showPage('co_pandg')">
+      <span class="nav-dot" style="background:#D35400"></span> P&G
+    </div>
+    <div class="nav-item" onclick="showPage('co_cipla')">
+      <span class="nav-dot" style="background:#6C3483"></span> Cipla
+    </div>
+    <div class="nav-item" onclick="showPage('co_aurobindo')">
+      <span class="nav-dot" style="background:#117A65"></span> Aurobindo
+    </div>
+    <div class="nav-item" onclick="showPage('co_novonordisk')">
+      <span class="nav-dot" style="background:#7D3C98"></span> NovoNordisk
+    </div>
+    <div class="nav-item" onclick="showPage('co_zydus')">
+      <span class="nav-dot" style="background:#1565C0"></span> Zydus
+    </div>
+    <div class="nav-item" onclick="showPage('co_koita')">
+      <span class="nav-dot" style="background:#00796B"></span> KOITA
+    </div>
+    <div class="nav-item" onclick="showPage('co_amneal')">
+      <span class="nav-dot" style="background:#E65100"></span> Amneal
+    </div>
+    <div class="nav-item" onclick="showPage('co_resmed')">
+      <span class="nav-dot" style="background:#37474F"></span> Resmed
+    </div>
+    <div class="nav-item" onclick="showPage('co_sun_pharma')">
+      <span class="nav-dot" style="background:#F57F17"></span> Sun Pharma
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Cost Analysis</div>
+    <div class="nav-item" onclick="showPage('vendors')"><span>🔧</span> Vendor Analysis</div>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- ═══ OVERVIEW ═══ -->
+<div id="page-overview" class="page active">
+  <div class="page-header">
+    <h2>📊 Project Profit Dashboard</h2>
+    <p>Consolidated performance across all clients and projects</p>
+    <span class="period-badge">Aug 2025 — Mar 2026</span>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#1F618D">
+      <div class="kpi-icon">💰</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-invoice">—</div><div class="kpi-sub">Across 12 companies</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">📦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-cost">—</div><div class="kpi-sub">All vendor &amp; operational costs</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">📈</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-profit">—</div><div class="kpi-sub">Net earnings</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">🎯</div><div class="kpi-label">Avg Profit Margin</div>
+      <div class="kpi-value" id="kpi-pct">—</div><div class="kpi-sub">Blended across all projects</div>
+    </div>
+  </div>
+  <div class="chart-full">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Performance — Invoice vs Cost vs Profit (₹)</h3>
+      <canvas id="chart-monthly-bar"></canvas>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <h3>🏢 Revenue Share by Company</h3>
+      <canvas id="chart-company-pie"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>📈 Profit Margin Trend by Company (%)
+        <span style="font-size:10px;font-weight:400;color:#7F8C8D"> — click to filter</span>
+      </h3>
+      <div id="margin-filters" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px"></div>
+      <canvas id="chart-margin-trend"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📋 Company Performance Summary</h3>
+    <table id="tbl-company-summary"></table>
+  </div>
+</div>
+
+
+<div id="page-co_hetero" class="page">
+  <div class="co-header" style="background:#C0392B">
+    <h2>Hetero</h2>
+    <p>Month-wise project profit analysis &nbsp;|&nbsp; Aug 2025 — Mar 2026</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#C0392B">
+      <div class="kpi-icon">💰</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-co_hetero-invoice">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">📦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-co_hetero-cost">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">📈</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-co_hetero-profit">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">🎯</div><div class="kpi-label">Avg Profit %</div>
+      <div class="kpi-value" id="kpi-co_hetero-pct">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Invoice vs Cost vs Profit (₹)</h3>
+      <canvas id="chart-co_hetero-bar"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>🍕 Revenue by Project</h3>
+      <canvas id="chart-co_hetero-pie"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📅 Month-wise Summary</h3>
+    <table id="tbl-co_hetero-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>📋 Project Details</h3>
+    <table id="tbl-co_hetero-projects"></table>
+  </div>
+</div>
+
+<div id="page-co_bayer" class="page">
+  <div class="co-header" style="background:#1A6E37">
+    <h2>Bayer</h2>
+    <p>Month-wise project profit analysis &nbsp;|&nbsp; Aug 2025 — Mar 2026</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#1A6E37">
+      <div class="kpi-icon">💰</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-co_bayer-invoice">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">📦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-co_bayer-cost">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">📈</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-co_bayer-profit">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">🎯</div><div class="kpi-label">Avg Profit %</div>
+      <div class="kpi-value" id="kpi-co_bayer-pct">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Invoice vs Cost vs Profit (₹)</h3>
+      <canvas id="chart-co_bayer-bar"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>🍕 Revenue by Project</h3>
+      <canvas id="chart-co_bayer-pie"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📅 Month-wise Summary</h3>
+    <table id="tbl-co_bayer-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>📋 Project Details</h3>
+    <table id="tbl-co_bayer-projects"></table>
+  </div>
+</div>
+
+<div id="page-co_lupin" class="page">
+  <div class="co-header" style="background:#1F618D">
+    <h2>Lupin</h2>
+    <p>Month-wise project profit analysis &nbsp;|&nbsp; Aug 2025 — Mar 2026</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#1F618D">
+      <div class="kpi-icon">💰</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-co_lupin-invoice">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">📦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-co_lupin-cost">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">📈</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-co_lupin-profit">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">🎯</div><div class="kpi-label">Avg Profit %</div>
+      <div class="kpi-value" id="kpi-co_lupin-pct">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Invoice vs Cost vs Profit (₹)</h3>
+      <canvas id="chart-co_lupin-bar"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>🍕 Revenue by Project</h3>
+      <canvas id="chart-co_lupin-pie"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📅 Month-wise Summary</h3>
+    <table id="tbl-co_lupin-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>📋 Project Details</h3>
+    <table id="tbl-co_lupin-projects"></table>
+  </div>
+</div>
+
+<div id="page-co_pandg" class="page">
+  <div class="co-header" style="background:#D35400">
+    <h2>P&G</h2>
+    <p>Month-wise project profit analysis &nbsp;|&nbsp; Aug 2025 — Mar 2026</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#D35400">
+      <div class="kpi-icon">💰</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-co_pandg-invoice">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">📦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-co_pandg-cost">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">📈</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-co_pandg-profit">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">🎯</div><div class="kpi-label">Avg Profit %</div>
+      <div class="kpi-value" id="kpi-co_pandg-pct">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Invoice vs Cost vs Profit (₹)</h3>
+      <canvas id="chart-co_pandg-bar"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>🍕 Revenue by Project</h3>
+      <canvas id="chart-co_pandg-pie"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📅 Month-wise Summary</h3>
+    <table id="tbl-co_pandg-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>📋 Project Details</h3>
+    <table id="tbl-co_pandg-projects"></table>
+  </div>
+</div>
+
+<div id="page-co_cipla" class="page">
+  <div class="co-header" style="background:#6C3483">
+    <h2>Cipla</h2>
+    <p>Month-wise project profit analysis &nbsp;|&nbsp; Aug 2025 — Mar 2026</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#6C3483">
+      <div class="kpi-icon">💰</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-co_cipla-invoice">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">📦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-co_cipla-cost">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">📈</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-co_cipla-profit">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">🎯</div><div class="kpi-label">Avg Profit %</div>
+      <div class="kpi-value" id="kpi-co_cipla-pct">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Invoice vs Cost vs Profit (₹)</h3>
+      <canvas id="chart-co_cipla-bar"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>🍕 Revenue by Project</h3>
+      <canvas id="chart-co_cipla-pie"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📅 Month-wise Summary</h3>
+    <table id="tbl-co_cipla-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>📋 Project Details</h3>
+    <table id="tbl-co_cipla-projects"></table>
+  </div>
+</div>
+
+<div id="page-co_aurobindo" class="page">
+  <div class="co-header" style="background:#117A65">
+    <h2>Aurobindo</h2>
+    <p>Month-wise project profit analysis &nbsp;|&nbsp; Aug 2025 — Mar 2026</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#117A65">
+      <div class="kpi-icon">💰</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-co_aurobindo-invoice">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">📦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-co_aurobindo-cost">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">📈</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-co_aurobindo-profit">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">🎯</div><div class="kpi-label">Avg Profit %</div>
+      <div class="kpi-value" id="kpi-co_aurobindo-pct">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Invoice vs Cost vs Profit (₹)</h3>
+      <canvas id="chart-co_aurobindo-bar"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>🍕 Revenue by Project</h3>
+      <canvas id="chart-co_aurobindo-pie"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📅 Month-wise Summary</h3>
+    <table id="tbl-co_aurobindo-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>📋 Project Details</h3>
+    <table id="tbl-co_aurobindo-projects"></table>
+  </div>
+</div>
+
+<div id="page-co_novonordisk" class="page">
+  <div class="co-header" style="background:#7D3C98">
+    <h2>NovoNordisk</h2>
+    <p>Month-wise project profit analysis &nbsp;|&nbsp; Aug 2025 — Mar 2026</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#7D3C98">
+      <div class="kpi-icon">💰</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-co_novonordisk-invoice">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">📦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-co_novonordisk-cost">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">📈</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-co_novonordisk-profit">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">🎯</div><div class="kpi-label">Avg Profit %</div>
+      <div class="kpi-value" id="kpi-co_novonordisk-pct">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Invoice vs Cost vs Profit (₹)</h3>
+      <canvas id="chart-co_novonordisk-bar"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>🍕 Revenue by Project</h3>
+      <canvas id="chart-co_novonordisk-pie"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📅 Month-wise Summary</h3>
+    <table id="tbl-co_novonordisk-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>📋 Project Details</h3>
+    <table id="tbl-co_novonordisk-projects"></table>
+  </div>
+</div>
+
+<div id="page-co_zydus" class="page">
+  <div class="co-header" style="background:#1565C0">
+    <h2>Zydus</h2>
+    <p>Month-wise project profit analysis &nbsp;|&nbsp; Aug 2025 — Mar 2026</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#1565C0">
+      <div class="kpi-icon">💰</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-co_zydus-invoice">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">📦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-co_zydus-cost">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">📈</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-co_zydus-profit">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">🎯</div><div class="kpi-label">Avg Profit %</div>
+      <div class="kpi-value" id="kpi-co_zydus-pct">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Invoice vs Cost vs Profit (₹)</h3>
+      <canvas id="chart-co_zydus-bar"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>🍕 Revenue by Project</h3>
+      <canvas id="chart-co_zydus-pie"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📅 Month-wise Summary</h3>
+    <table id="tbl-co_zydus-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>📋 Project Details</h3>
+    <table id="tbl-co_zydus-projects"></table>
+  </div>
+</div>
+
+<div id="page-co_koita" class="page">
+  <div class="co-header" style="background:#00796B">
+    <h2>KOITA</h2>
+    <p>Month-wise project profit analysis &nbsp;|&nbsp; Aug 2025 — Mar 2026</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#00796B">
+      <div class="kpi-icon">💰</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-co_koita-invoice">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">📦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-co_koita-cost">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">📈</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-co_koita-profit">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">🎯</div><div class="kpi-label">Avg Profit %</div>
+      <div class="kpi-value" id="kpi-co_koita-pct">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Invoice vs Cost vs Profit (₹)</h3>
+      <canvas id="chart-co_koita-bar"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>🍕 Revenue by Project</h3>
+      <canvas id="chart-co_koita-pie"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📅 Month-wise Summary</h3>
+    <table id="tbl-co_koita-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>📋 Project Details</h3>
+    <table id="tbl-co_koita-projects"></table>
+  </div>
+</div>
+
+<div id="page-co_amneal" class="page">
+  <div class="co-header" style="background:#E65100">
+    <h2>Amneal</h2>
+    <p>Month-wise project profit analysis &nbsp;|&nbsp; Aug 2025 — Mar 2026</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#E65100">
+      <div class="kpi-icon">💰</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-co_amneal-invoice">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">📦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-co_amneal-cost">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">📈</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-co_amneal-profit">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">🎯</div><div class="kpi-label">Avg Profit %</div>
+      <div class="kpi-value" id="kpi-co_amneal-pct">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Invoice vs Cost vs Profit (₹)</h3>
+      <canvas id="chart-co_amneal-bar"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>🍕 Revenue by Project</h3>
+      <canvas id="chart-co_amneal-pie"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📅 Month-wise Summary</h3>
+    <table id="tbl-co_amneal-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>📋 Project Details</h3>
+    <table id="tbl-co_amneal-projects"></table>
+  </div>
+</div>
+
+<div id="page-co_resmed" class="page">
+  <div class="co-header" style="background:#37474F">
+    <h2>Resmed</h2>
+    <p>Month-wise project profit analysis &nbsp;|&nbsp; Aug 2025 — Mar 2026</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#37474F">
+      <div class="kpi-icon">💰</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-co_resmed-invoice">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">📦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-co_resmed-cost">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">📈</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-co_resmed-profit">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">🎯</div><div class="kpi-label">Avg Profit %</div>
+      <div class="kpi-value" id="kpi-co_resmed-pct">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Invoice vs Cost vs Profit (₹)</h3>
+      <canvas id="chart-co_resmed-bar"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>🍕 Revenue by Project</h3>
+      <canvas id="chart-co_resmed-pie"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📅 Month-wise Summary</h3>
+    <table id="tbl-co_resmed-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>📋 Project Details</h3>
+    <table id="tbl-co_resmed-projects"></table>
+  </div>
+</div>
+
+<div id="page-co_sun_pharma" class="page">
+  <div class="co-header" style="background:#F57F17">
+    <h2>Sun Pharma</h2>
+    <p>Month-wise project profit analysis &nbsp;|&nbsp; Aug 2025 — Mar 2026</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#F57F17">
+      <div class="kpi-icon">💰</div><div class="kpi-label">Total Invoiced</div>
+      <div class="kpi-value" id="kpi-co_sun_pharma-invoice">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#E74C3C">
+      <div class="kpi-icon">📦</div><div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-co_sun_pharma-cost">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#27AE60">
+      <div class="kpi-icon">📈</div><div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-co_sun_pharma-profit">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#F39C12">
+      <div class="kpi-icon">🎯</div><div class="kpi-label">Avg Profit %</div>
+      <div class="kpi-value" id="kpi-co_sun_pharma-pct">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Invoice vs Cost vs Profit (₹)</h3>
+      <canvas id="chart-co_sun_pharma-bar"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>🍕 Revenue by Project</h3>
+      <canvas id="chart-co_sun_pharma-pie"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📅 Month-wise Summary</h3>
+    <table id="tbl-co_sun_pharma-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>📋 Project Details</h3>
+    <table id="tbl-co_sun_pharma-projects"></table>
+  </div>
+</div>
+
+
+<!-- ═══ VENDOR ═══ -->
+<div id="page-vendors" class="page">
+  <div class="page-header" style="background:#2C3E50">
+    <h2>🔧 Vendor Cost Analysis</h2>
+    <p>Medical Writing · Webinar/Tech · Events &nbsp;|&nbsp; KOL/Doctor honorariums excluded</p>
+    <span class="period-badge">Aug 2025 — Mar 2026</span>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#1A6E37">
+      <div class="kpi-icon">✍️</div><div class="kpi-label">Medical Writing</div>
+      <div class="kpi-value" id="kpi-vend-mw">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#1F618D">
+      <div class="kpi-icon">🖥️</div><div class="kpi-label">Webinar / Tech</div>
+      <div class="kpi-value" id="kpi-vend-wt">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#C0392B">
+      <div class="kpi-icon">🎪</div><div class="kpi-label">Events</div>
+      <div class="kpi-value" id="kpi-vend-ev">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#2C3E50">
+      <div class="kpi-icon">💸</div><div class="kpi-label">Total Vendor Cost</div>
+      <div class="kpi-value" id="kpi-vend-total">—</div><div class="kpi-sub">&nbsp;</div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card tall">
+      <h3>📅 Monthly Vendor Cost — Stacked by Category (₹)</h3>
+      <canvas id="chart-vend-monthly"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>🍕 Overall Vendor Category Split</h3>
+      <canvas id="chart-vend-pie"></canvas>
+    </div>
+  </div>
+  <div class="chart-full">
+    <div class="chart-card">
+      <h3>🏢 Vendor Costs by Company</h3>
+      <canvas id="chart-vend-company" style="max-height:220px"></canvas>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>📅 Month-wise Vendor Cost Breakdown</h3>
+    <table id="tbl-vend-monthly"></table>
+  </div>
+  <div class="table-card">
+    <h3>🏢 Company-wise Vendor Cost Breakdown</h3>
+    <table id="tbl-vend-company"></table>
+  </div>
+</div>
+
+<div class="footer">OnealphaMed · Project Profit Dashboard · Aug 2025 – Mar 2026 · All figures in INR (₹)</div>
+</main>
+
+<script>
+const D = {"months":["Aug'25","Sept'25","Oct'25","Nov'25","Dec'25","Jan'26","Feb'26","Mar'26"],"companies":["Hetero","Bayer","Lupin","P&G","Cipla","Aurobindo","NovoNordisk","Zydus","KOITA","Amneal","Resmed","Sun Pharma"],"monthly":{"invoice":[1146700.0,2455744.0,1918049.0,3819649.0,4927074.0,6829485.0,2399469.0,561992.2],"cost":[346219.0,669240.0,594156.0,1716023.0,809334.0,2001083.0,623359.0,233092.0],"profit":[925481.0,2086504.0,1323893.0,2103626.0,4117740.0,4828402.0,1776110.0,328900.2]},"company_totals":{"Hetero":{"invoice":3703129.0,"cost":1534217.0,"profit":2168912.0,"pct":0.5856971226225174},"Bayer":{"invoice":2800000.0,"cost":539000.0,"profit":2686000.0,"pct":0.9592857142857143},"Lupin":{"invoice":3218900.0,"cost":257600.0,"profit":2961300.0,"pct":0.9199726614682034},"P&G":{"invoice":4793562.2,"cost":2203349.0,"profit":2590213.2,"pct":0.5403524752427329},"Cipla":{"invoice":292000.0,"cost":33500.0,"profit":258500.0,"pct":0.8852739726027398},"Aurobindo":{"invoice":535721.0,"cost":219106.0,"profit":316615.0,"pct":0.5910072593756824},"NovoNordisk":{"invoice":2863750.0,"cost":151159.0,"profit":2712591.0,"pct":0.947216412047141},"Zydus":{"invoice":1500000.0,"cost":0.0,"profit":1500000.0,"pct":1.0},"KOITA":{"invoice":574000.0,"cost":231000.0,"profit":343000.0,"pct":0.5975609756097561},"Amneal":{"invoice":3592100.0,"cost":1813575.0,"profit":1778525.0,"pct":0.4951212382728766},"Resmed":{"invoice":110000.0,"cost":10000.0,"profit":100000.0,"pct":0.9090909090909091},"Sun Pharma":{"invoice":75000.0,"cost":0.0,"profit":75000.0,"pct":1.0}},"company_monthly":{"Hetero":{"invoice":[600000.0,904000.0,600000.0,1580129.0,9500.0,0.0,9500.0,0.0],"cost":[276779.0,292720.0,286150.0,663334.0,7250.0,0.0,7984.0,0.0],"profit":[323221.0,611280.0,313850.0,916795.0,2250.0,0.0,1516.0,0.0],"pct":[0.5387016666666666,0.6761946902654867,0.5230833333333333,0.5802026290258581,0.23684210526315788,0,0.15957894736842104,0]},"Bayer":{"invoice":[175000.0,600000.0,375000.0,250000.0,525000.0,175000.0,700000.0,0.0],"cost":[35000.0,105000.0,70000.0,50000.0,104000.0,35000.0,140000.0,0.0],"profit":[265000.0,795000.0,305000.0,200000.0,421000.0,140000.0,560000.0,0.0],"pct":[1.5142857142857142,1.325,0.8133333333333334,0.8,0.8019047619047619,0.8,0.8,0]},"Lupin":{"invoice":[291700.0,291700.0,291700.0,291700.0,700700.0,675700.0,675700.0,0.0],"cost":[20000.0,20000.0,20000.0,20000.0,70400.0,53600.0,53600.0,0.0],"profit":[271700.0,271700.0,271700.0,271700.0,630300.0,622100.0,622100.0,0.0],"pct":[0.9314364072677408,0.9314364072677408,0.9314364072677408,0.9314364072677408,0.8995290423861853,0.9206748557051946,0.9206748557051946,0]},"P&G":{"invoice":[0.0,548044.0,79200.0,1445498.0,1750374.0,41685.0,366769.0,561992.2],"cost":[0.0,233520.0,62900.0,916689.0,539465.0,26908.0,190775.0,233092.0],"profit":[0.0,314524.0,16300.0,528809.0,1210909.0,14777.0,175994.0,328900.2],"pct":[0,0.5739028253205947,0.2058080808080808,0.36583170644303903,0.6918001524245676,0.35449202350965575,0.47984971467054194,0.5852397951430643]},"Cipla":{"invoice":[0.0,22000.0,30000.0,0.0,166500.0,0.0,73500.0,0.0],"cost":[0.0,2000.0,6000.0,0.0,25500.0,0.0,0.0,0.0],"profit":[0.0,20000.0,24000.0,0.0,141000.0,0.0,73500.0,0.0],"pct":[0,0.9090909090909091,0.8,0,0.8468468468468469,0,1.0,0]},"Aurobindo":{"invoice":[0.0,90000.0,213399.0,142322.0,45000.0,45000.0,0.0,0.0],"cost":[0.0,16000.0,119106.0,56000.0,23000.0,5000.0,0.0,0.0],"profit":[0.0,74000.0,94293.0,86322.0,22000.0,40000.0,0.0,0.0],"pct":[0,0.8222222222222222,0.4418624267217747,0.606526046570453,0.4888888888888889,0.8888888888888888,0,0]},"NovoNordisk":{"invoice":[80000.0,0.0,303750.0,0.0,1680000.0,800000.0,0.0,0.0],"cost":[14440.0,0.0,30000.0,0.0,39719.0,67000.0,0.0,0.0],"profit":[65560.0,0.0,273750.0,0.0,1640281.0,733000.0,0.0,0.0],"pct":[0.8195,0,0.9012345679012346,0,0.9763577380952381,0.91625,0,0]},"Zydus":{"invoice":[0.0,0.0,0.0,0.0,0.0,1500000.0,0.0,0.0],"cost":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"profit":[0.0,0.0,0.0,0.0,0.0,1500000.0,0.0,0.0],"pct":[0,0,0,0,0,1.0,0,0]},"KOITA":{"invoice":[0.0,0.0,0.0,0.0,0.0,0.0,574000.0,0.0],"cost":[0.0,0.0,0.0,0.0,0.0,0.0,231000.0,0.0],"profit":[0.0,0.0,0.0,0.0,0.0,0.0,343000.0,0.0],"pct":[0,0,0,0,0,0,0.5975609756097561,0]},"Amneal":{"invoice":[0.0,0.0,0.0,0.0,0.0,3592100.0,0.0,0.0],"cost":[0.0,0.0,0.0,0.0,0.0,1813575.0,0.0,0.0],"profit":[0.0,0.0,0.0,0.0,0.0,1778525.0,0.0,0.0],"pct":[0,0,0,0,0,0.4951212382728766,0,0]},"Resmed":{"invoice":[0.0,0.0,0.0,110000.0,0.0,0.0,0.0,0.0],"cost":[0.0,0.0,0.0,10000.0,0.0,0.0,0.0,0.0],"profit":[0.0,0.0,0.0,100000.0,0.0,0.0,0.0,0.0],"pct":[0,0,0,0.9090909090909091,0,0,0,0]},"Sun Pharma":{"invoice":[0.0,0.0,25000.0,0.0,50000.0,0.0,0.0,0.0],"cost":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"profit":[0.0,0.0,25000.0,0.0,50000.0,0.0,0.0,0.0],"pct":[0,0,1.0,0,1.0,0,0,0]}},"projects":{"Hetero":[{"Project":"CNS ISP Hetero","Month":"Aug'25","Invoice":300000.0,"Cost":142475.0,"Profit":157525.0,"ProfitPct":0.5250833333333333},{"Project":"Oncology ISP","Month":"Aug'25","Invoice":300000.0,"Cost":134304.0,"Profit":165696.0,"ProfitPct":0.55232},{"Project":"Hetero","Month":"Dec'25","Invoice":9500.0,"Cost":7250.0,"Profit":2250.0,"ProfitPct":0.23684210526315788},{"Project":"French Translation","Month":"Feb'26","Invoice":9500.0,"Cost":7984.0,"Profit":1516.0,"ProfitPct":0.15957894736842104},{"Project":"VISTA","Month":"Nov'25","Invoice":665129.0,"Cost":244209.0,"Profit":420920.0,"ProfitPct":0.632839644640363},{"Project":"Diabetes Jakarta","Month":"Nov'25","Invoice":315000.0,"Cost":132975.0,"Profit":182025.0,"ProfitPct":0.5778571428571428},{"Project":"Hetero CNS - Epilepsy","Month":"Nov'25","Invoice":300000.0,"Cost":143075.0,"Profit":156925.0,"ProfitPct":0.5230833333333333},{"Project":"Hetero CNS - BMD","Month":"Nov'25","Invoice":300000.0,"Cost":143075.0,"Profit":156925.0,"ProfitPct":0.5230833333333333},{"Project":"HIV treatment","Month":"Oct'25","Invoice":300000.0,"Cost":143075.0,"Profit":156925.0,"ProfitPct":0.5230833333333333},{"Project":"CML Webinar","Month":"Oct'25","Invoice":300000.0,"Cost":143075.0,"Profit":156925.0,"ProfitPct":0.5230833333333333},{"Project":"Prostate Cancer","Month":"Sept'25","Invoice":300000.0,"Cost":116691.0,"Profit":183309.0,"ProfitPct":0.61103},{"Project":"CML Webinar","Month":"Sept'25","Invoice":300000.0,"Cost":143102.0,"Profit":156898.0,"ProfitPct":0.5229933333333333},{"Project":"HIV treatment","Month":"Sept'25","Invoice":300000.0,"Cost":30427.0,"Profit":269573.0,"ProfitPct":0.8985766666666667},{"Project":"Corporate Brochure Portuguese","Month":"Sept'25","Invoice":4000.0,"Cost":2500.0,"Profit":1500.0,"ProfitPct":0.375}],"Bayer":[{"Project":"Oncology","Month":"Aug'25","Invoice":125000.0,"Cost":0.0,"Profit":125000.0,"ProfitPct":1.0},{"Project":"Opthalmology","Month":"Aug'25","Invoice":50000.0,"Cost":35000.0,"Profit":140000.0,"ProfitPct":2.8},{"Project":"Opthalmology","Month":"Dec'25","Invoice":525000.0,"Cost":104000.0,"Profit":421000.0,"ProfitPct":0.8019047619047619},{"Project":"Opthalmology","Month":"Feb'26","Invoice":700000.0,"Cost":140000.0,"Profit":560000.0,"ProfitPct":0.8},{"Project":"Opthalmology","Month":"Jan'26","Invoice":175000.0,"Cost":35000.0,"Profit":140000.0,"ProfitPct":0.8},{"Project":"Opthalmology","Month":"Nov'25","Invoice":250000.0,"Cost":50000.0,"Profit":200000.0,"ProfitPct":0.8},{"Project":"Opthalmology","Month":"Oct'25","Invoice":375000.0,"Cost":70000.0,"Profit":305000.0,"ProfitPct":0.8133333333333334},{"Project":"Opthalmology","Month":"Sept'25","Invoice":300000.0,"Cost":105000.0,"Profit":495000.0,"ProfitPct":1.65},{"Project":"Oncology","Month":"Sept'25","Invoice":250000.0,"Cost":0.0,"Profit":250000.0,"ProfitPct":1.0},{"Project":"Oncology","Month":"Sept'25","Invoice":50000.0,"Cost":0.0,"Profit":50000.0,"ProfitPct":1.0}],"Lupin":[{"Project":"Digi Konnect","Month":"Aug'25","Invoice":291700.0,"Cost":20000.0,"Profit":271700.0,"ProfitPct":0.9314364072677408},{"Project":"Diabeto Cardio Retainer","Month":"Dec'25","Invoice":384000.0,"Cost":50400.0,"Profit":333600.0,"ProfitPct":0.86875},{"Project":"Digi Konnect","Month":"Dec'25","Invoice":291700.0,"Cost":20000.0,"Profit":271700.0,"ProfitPct":0.9314364072677408},{"Project":"Metabolic Retainer","Month":"Dec'25","Invoice":25000.0,"Cost":0.0,"Profit":25000.0,"ProfitPct":1.0},{"Project":"Diabeto Cardio Retainer","Month":"Feb'26","Invoice":384000.0,"Cost":33600.0,"Profit":350400.0,"ProfitPct":0.9125},{"Project":"Digi Konnect","Month":"Feb'26","Invoice":291700.0,"Cost":20000.0,"Profit":271700.0,"ProfitPct":0.9314364072677408},{"Project":"Diabeto Cardio Retainer","Month":"Jan'26","Invoice":384000.0,"Cost":33600.0,"Profit":350400.0,"ProfitPct":0.9125},{"Project":"Digi Konnect","Month":"Jan'26","Invoice":291700.0,"Cost":20000.0,"Profit":271700.0,"ProfitPct":0.9314364072677408},{"Project":"Digi Konnect","Month":"Nov'25","Invoice":291700.0,"Cost":20000.0,"Profit":271700.0,"ProfitPct":0.9314364072677408},{"Project":"Digi Konnect","Month":"Oct'25","Invoice":291700.0,"Cost":20000.0,"Profit":271700.0,"ProfitPct":0.9314364072677408},{"Project":"Digi Konnect","Month":"Sept'25","Invoice":291700.0,"Cost":20000.0,"Profit":271700.0,"ProfitPct":0.9314364072677408}],"P&G":[{"Project":"UCLH","Month":"Dec'25","Invoice":768390.0,"Cost":0.0,"Profit":768390.0,"ProfitPct":1.0},{"Project":"BHF (Dec 12)","Month":"Dec'25","Invoice":489929.0,"Cost":282850.0,"Profit":207079.0,"ProfitPct":0.42267144831189823},{"Project":"BHF (Dec 23)","Month":"Dec'25","Invoice":388278.0,"Cost":174772.0,"Profit":213506.0,"ProfitPct":0.5498792102565687},{"Project":"LiverEdge 05/12","Month":"Dec'25","Invoice":103777.0,"Cost":81843.0,"Profit":21934.0,"ProfitPct":0.21135704443181053},{"Project":"LiverEdge 13/02/26","Month":"Feb'26","Invoice":226769.0,"Cost":190775.0,"Profit":35994.0,"ProfitPct":0.1587253989742866},{"Project":"Abridged Guideline","Month":"Feb'26","Invoice":140000.0,"Cost":0.0,"Profit":140000.0,"ProfitPct":1.0},{"Project":"LiverEdge 09/01/26","Month":"Jan'26","Invoice":41685.0,"Cost":26908.0,"Profit":14777.0,"ProfitPct":0.35449202350965575},{"Project":"BHF- Nagpur","Month":"Mar'26","Invoice":561992.2,"Cost":233092.0,"Profit":328900.2,"ProfitPct":0.5852397951430643},{"Project":"BHF (Nov 27)","Month":"Nov'25","Invoice":506161.0,"Cost":295255.0,"Profit":210906.0,"ProfitPct":0.4166776974124834},{"Project":"BHF (Oct 31)","Month":"Nov'25","Invoice":403582.0,"Cost":167959.0,"Profit":235623.0,"ProfitPct":0.5838293085420063},{"Project":"Liver Edge 28/11","Month":"Nov'25","Invoice":317097.0,"Cost":279845.0,"Profit":37252.0,"ProfitPct":0.11747824798090174},{"Project":"LiverEdge 11/11","Month":"Nov'25","Invoice":181753.0,"Cost":155680.0,"Profit":26073.0,"ProfitPct":0.14345292787464306},{"Project":"LiverEdge 01/11","Month":"Nov'25","Invoice":36905.0,"Cost":17950.0,"Profit":18955.0,"ProfitPct":0.513616041186831},{"Project":"Liver Edge","Month":"Oct'25","Invoice":79200.0,"Cost":62900.0,"Profit":16300.0,"ProfitPct":0.2058080808080808},{"Project":"P&G BHF","Month":"Sept'25","Invoice":456544.0,"Cost":233520.0,"Profit":223024.0,"ProfitPct":0.48850494147333007},{"Project":"UCLH Polybion","Month":"Sept'25","Invoice":91500.0,"Cost":0.0,"Profit":91500.0,"ProfitPct":1.0}],"Cipla":[{"Project":"Cipla HSS Binder","Month":"Dec'25","Invoice":166500.0,"Cost":25500.0,"Profit":141000.0,"ProfitPct":0.8468468468468469},{"Project":"KOL Video","Month":"Feb'26","Invoice":73500.0,"Cost":0.0,"Profit":73500.0,"ProfitPct":1.0},{"Project":"Cipla Binders","Month":"Oct'25","Invoice":30000.0,"Cost":6000.0,"Profit":24000.0,"ProfitPct":0.8},{"Project":"Cipla Case Study","Month":"Sept'25","Invoice":22000.0,"Cost":2000.0,"Profit":20000.0,"ProfitPct":0.9090909090909091}],"Aurobindo":[{"Project":"Elagolix 12/12","Month":"Dec'25","Invoice":45000.0,"Cost":23000.0,"Profit":22000.0,"ProfitPct":0.4888888888888889},{"Project":"Elagolix","Month":"Jan'26","Invoice":45000.0,"Cost":5000.0,"Profit":40000.0,"ProfitPct":0.8888888888888888},{"Project":"Aurogen","Month":"Nov'25","Invoice":52322.0,"Cost":0.0,"Profit":52322.0,"ProfitPct":1.0},{"Project":"Aurobindo 21/11","Month":"Nov'25","Invoice":45000.0,"Cost":23000.0,"Profit":22000.0,"ProfitPct":0.4888888888888889},{"Project":"Aurobindo 25/11","Month":"Nov'25","Invoice":45000.0,"Cost":33000.0,"Profit":12000.0,"ProfitPct":0.26666666666666666},{"Project":"Aurogen","Month":"Oct'25","Invoice":213399.0,"Cost":119106.0,"Profit":94293.0,"ProfitPct":0.4418624267217747},{"Project":"Elagolix Webinar","Month":"Sept'25","Invoice":90000.0,"Cost":16000.0,"Profit":74000.0,"ProfitPct":0.8222222222222222}],"NovoNordisk":[{"Project":"Wegowe","Month":"Aug'25","Invoice":80000.0,"Cost":14440.0,"Profit":65560.0,"ProfitPct":0.8195},{"Project":"Ozempic Webinars","Month":"Dec'25","Invoice":840000.0,"Cost":18595.0,"Profit":821405.0,"ProfitPct":0.9778630952380952},{"Project":"Ozempic webinar","Month":"Dec'25","Invoice":840000.0,"Cost":21124.0,"Profit":818876.0,"ProfitPct":0.9748523809523809},{"Project":"Ozempic Publication","Month":"Jan'26","Invoice":800000.0,"Cost":67000.0,"Profit":733000.0,"ProfitPct":0.91625},{"Project":"Novo Nordisk","Month":"Oct'25","Invoice":303750.0,"Cost":30000.0,"Profit":273750.0,"ProfitPct":0.9012345679012346}],"Zydus":[{"Project":"ERS","Month":"Jan'26","Invoice":1500000.0,"Cost":0.0,"Profit":1500000.0,"ProfitPct":1.0}],"KOITA":[{"Project":"DHFC-D","Month":"Feb'26","Invoice":420000.0,"Cost":225000.0,"Profit":195000.0,"ProfitPct":0.4642857142857143},{"Project":"AI videos","Month":"Feb'26","Invoice":154000.0,"Cost":6000.0,"Profit":148000.0,"ProfitPct":0.961038961038961}],"Amneal":[{"Project":"Amneal Annual Meeting","Month":"Jan'26","Invoice":3592100.0,"Cost":1813575.0,"Profit":1778525.0,"ProfitPct":0.4951212382728766}],"Resmed":[{"Project":"Resmed","Month":"Nov'25","Invoice":110000.0,"Cost":10000.0,"Profit":100000.0,"ProfitPct":0.9090909090909091}],"Sun Pharma":[{"Project":"Sun Headon","Month":"Dec'25","Invoice":50000.0,"Cost":0.0,"Profit":50000.0,"ProfitPct":1.0},{"Project":"Sun Pharma","Month":"Oct'25","Invoice":25000.0,"Cost":0.0,"Profit":25000.0,"ProfitPct":1.0}]},"vendor":{"monthly":{"Medical Writing":[22200.0,25800.0,28200.0,23300.0,94945.0,33600.0,146584.0,0.0],"Webinar/Tech":[65440.0,145000.0,205106.0,90000.0,135800.0,40000.0,140000.0,0.0],"Events":[0.0,233520.0,62900.0,453900.0,364693.0,0.0,190775.0,411992.0]},"totals":{"Medical Writing":374629.0,"Webinar/Tech":821346.0,"Events":1717780.0},"by_company":{"Hetero":{"Medical Writing":28734.0,"Webinar/Tech":80000.0,"Events":0.0},"Bayer":{"Medical Writing":0.0,"Webinar/Tech":539000.0,"Events":0.0},"Lupin":{"Medical Writing":200800.0,"Webinar/Tech":16800.0,"Events":0.0},"P&G":{"Medical Writing":0.0,"Webinar/Tech":0.0,"Events":1707780.0},"Cipla":{"Medical Writing":31500.0,"Webinar/Tech":0.0,"Events":0.0},"Aurobindo":{"Medical Writing":0.0,"Webinar/Tech":161106.0,"Events":0.0},"NovoNordisk":{"Medical Writing":8595.0,"Webinar/Tech":24440.0,"Events":0.0},"Zydus":{"Medical Writing":0.0,"Webinar/Tech":0.0,"Events":0.0},"KOITA":{"Medical Writing":105000.0,"Webinar/Tech":0.0,"Events":0.0},"Amneal":{"Medical Writing":0.0,"Webinar/Tech":0.0,"Events":0.0},"Resmed":{"Medical Writing":0.0,"Webinar/Tech":0.0,"Events":10000.0},"Sun Pharma":{"Medical Writing":0.0,"Webinar/Tech":0.0,"Events":0.0}}},"grand":{"invoice":24058162.2,"cost":6992506.0,"profit":17490656.2,"pct":0.727015474191125}};
+const MONTHS = D.months;
+const COMPANIES = D.companies;
+const CO_COLORS = {"Hetero": "#C0392B", "Bayer": "#1A6E37", "Lupin": "#1F618D", "P&G": "#D35400", "Cipla": "#6C3483", "Aurobindo": "#117A65", "NovoNordisk": "#7D3C98", "Zydus": "#1565C0", "KOITA": "#00796B", "Amneal": "#E65100", "Resmed": "#37474F", "Sun Pharma": "#F57F17"};
+const CO_LIGHT  = {"Hetero": "#FADBD8", "Bayer": "#D5F5E3", "Lupin": "#D6EAF8", "P&G": "#FAE5D3", "Cipla": "#E8DAEF", "Aurobindo": "#D1F2EB", "NovoNordisk": "#F5EEF8", "Zydus": "#DDEEFF", "KOITA": "#E0F2F1", "Amneal": "#FFF3E0", "Resmed": "#ECEFF1", "Sun Pharma": "#FFFDE7"};
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function fmtL(n){
+  if(!n) return '—';
+  if(n>=10000000) return '₹'+(n/10000000).toFixed(2)+'Cr';
+  if(n>=100000)   return '₹'+(n/100000).toFixed(2)+'L';
+  return '₹'+n.toLocaleString('en-IN',{maximumFractionDigits:0});
+}
+function fmtPct(n){ return n?(n*100).toFixed(1)+'%':'—'; }
+function pctBadge(p){
+  const cls=p>=0.7?'badge-green':p>=0.4?'badge-orange':'badge-red';
+  return `<span class="badge ${cls}">${(p*100).toFixed(1)}%</span>`;
+}
+function coId(co){ return 'co_'+co.toLowerCase().replace(/&/g,'and').replace(/ /g,'_'); }
+function setKpi(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pg=document.getElementById('page-'+name);
+  if(pg) pg.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+name+"'"))
+      n.classList.add('active');
+  });
+}
+
+// ─── Chart helpers ─────────────────────────────────────────────────────────────
+const chartInst={};
+function makeChart(id,cfg){
+  if(chartInst[id]) chartInst[id].destroy();
+  const el=document.getElementById(id);
+  if(el) chartInst[id]=new Chart(el,cfg);
+}
+function yTick(v){ return v>=1e5?'₹'+(v/1e5).toFixed(0)+'L':'₹'+v.toLocaleString(); }
+
+function barConfig(labels,datasets){
+  return {type:'bar',data:{labels,datasets},options:{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10}}},
+      y:{grid:{color:'#F0F4F8'},ticks:{font:{size:10},callback:yTick}}
+    }
+  }};
+}
+function stackedBarConfig(labels,datasets){
+  return {type:'bar',data:{labels,datasets},options:{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},
+    scales:{
+      x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},
+      y:{stacked:true,grid:{color:'#F0F4F8'},ticks:{font:{size:10},callback:yTick}}
+    }
+  }};
+}
+function lineConfig(labels,datasets){
+  return {type:'line',data:{labels,datasets},options:{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10}}},
+      y:{grid:{color:'#F0F4F8'},min:0,max:1,ticks:{font:{size:10},callback:v=>(v*100).toFixed(0)+'%'}}
+    }
+  }};
+}
+function pieConfig(labels,data,colors){
+  return {type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{
+    responsive:true,maintainAspectRatio:true,cutout:'55%',
+    plugins:{
+      legend:{position:'right',labels:{font:{size:11},boxWidth:12,padding:10}},
+      tooltip:{callbacks:{label:ctx=>{
+        const tot=ctx.dataset.data.reduce((a,b)=>a+b,0);
+        return ` ₹${ctx.parsed.toLocaleString('en-IN',{maximumFractionDigits:0})} (${(ctx.parsed/tot*100).toFixed(1)}%)`;
+      }}}
+    }
+  }};
+}
+
+// ─── Overview ─────────────────────────────────────────────────────────────────
+function buildOverview(){
+  const g=D.grand;
+  setKpi('kpi-invoice',fmtL(g.invoice));
+  setKpi('kpi-cost',fmtL(g.cost));
+  setKpi('kpi-profit',fmtL(g.profit));
+  setKpi('kpi-pct',fmtPct(g.pct));
+
+  makeChart('chart-monthly-bar', barConfig(MONTHS,[
+    {label:'Invoice',data:D.monthly.invoice,backgroundColor:'rgba(46,134,171,0.85)',borderRadius:4},
+    {label:'Cost',   data:D.monthly.cost,   backgroundColor:'rgba(228,92,58,0.85)', borderRadius:4},
+    {label:'Profit', data:D.monthly.profit, backgroundColor:'rgba(39,174,96,0.85)', borderRadius:4},
+  ]));
+
+  makeChart('chart-company-pie', pieConfig(
+    COMPANIES,
+    COMPANIES.map(c=>D.company_totals[c].invoice),
+    COMPANIES.map(c=>CO_COLORS[c])
+  ));
+
+  // Filterable margin trend
+  let activeCompanies=new Set(COMPANIES);
+  function buildMarginChart(){
+    const ds=COMPANIES.map(co=>({
+      label:co, data:D.company_monthly[co].pct,
+      borderColor:CO_COLORS[co], backgroundColor:CO_COLORS[co]+'22',
+      tension:0.3, fill:false, pointRadius:4, pointHoverRadius:6, borderWidth:2.5,
+      hidden:!activeCompanies.has(co)
+    }));
+    makeChart('chart-margin-trend', lineConfig(MONTHS,ds));
+  }
+  const fd=document.getElementById('margin-filters');
+  const allBtn=document.createElement('button');
+  allBtn.textContent='All';
+  allBtn.style.cssText='padding:3px 10px;border-radius:12px;border:2px solid #1A3A52;background:#1A3A52;color:#fff;font-size:10px;font-weight:700;cursor:pointer;';
+  allBtn.onclick=()=>{
+    activeCompanies=new Set(COMPANIES);
+    document.querySelectorAll('.co-filter-btn').forEach(b=>{b.style.opacity='1';b.style.background=b.dataset.color;b.style.color='#fff';});
+    allBtn.style.background='#1A3A52'; allBtn.style.color='#fff';
+    buildMarginChart();
+  };
+  fd.appendChild(allBtn);
+  COMPANIES.forEach(co=>{
+    const btn=document.createElement('button');
+    btn.className='co-filter-btn'; btn.dataset.color=CO_COLORS[co]; btn.dataset.co=co;
+    btn.textContent=co;
+    btn.style.cssText=`padding:3px 10px;border-radius:12px;border:2px solid ${CO_COLORS[co]};background:${CO_COLORS[co]};color:#fff;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s;`;
+    btn.onclick=()=>{
+      if(activeCompanies.has(co)&&activeCompanies.size===1) return;
+      if(activeCompanies.size===COMPANIES.length){
+        activeCompanies=new Set([co]);
+        document.querySelectorAll('.co-filter-btn').forEach(b=>{
+          if(b.dataset.co!==co){b.style.opacity='0.35';b.style.background='#fff';b.style.color=b.dataset.color;}
+        });
+        allBtn.style.background='transparent'; allBtn.style.color='#1A3A52';
+      } else {
+        if(activeCompanies.has(co)){ activeCompanies.delete(co); btn.style.opacity='0.35';btn.style.background='#fff';btn.style.color=CO_COLORS[co]; }
+        else { activeCompanies.add(co); btn.style.opacity='1';btn.style.background=CO_COLORS[co];btn.style.color='#fff'; }
+      }
+      buildMarginChart();
+    };
+    fd.appendChild(btn);
+  });
+  buildMarginChart();
+
+  // Summary table
+  let h=`<thead><tr><th>Company</th><th class="num">Invoice</th><th class="num">Cost</th><th class="num">Profit</th><th class="num">Profit %</th></tr></thead><tbody>`;
+  COMPANIES.forEach(co=>{
+    const t=D.company_totals[co];
+    const dot=`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${CO_COLORS[co]};margin-right:6px"></span>`;
+    h+=`<tr><td>${dot}${co}</td><td class="num">${fmtL(t.invoice)}</td><td class="num">${fmtL(t.cost)}</td><td class="num" style="color:#27AE60;font-weight:600">${fmtL(t.profit)}</td><td class="num">${pctBadge(t.pct)}</td></tr>`;
+  });
+  const g2=D.grand;
+  h+=`<tr style="background:#F7F9FC;font-weight:700;border-top:2px solid #DDE2E8"><td>Grand Total</td><td class="num">${fmtL(g2.invoice)}</td><td class="num">${fmtL(g2.cost)}</td><td class="num" style="color:#27AE60">${fmtL(g2.profit)}</td><td class="num">${pctBadge(g2.pct)}</td></tr></tbody>`;
+  document.getElementById('tbl-company-summary').innerHTML=h;
+}
+
+// ─── Company Page ──────────────────────────────────────────────────────────────
+function buildCompanyPage(co){
+  const pid=coId(co), t=D.company_totals[co], cm=D.company_monthly[co], color=CO_COLORS[co];
+  setKpi(`kpi-${pid}-invoice`,fmtL(t.invoice));
+  setKpi(`kpi-${pid}-cost`,fmtL(t.cost));
+  setKpi(`kpi-${pid}-profit`,fmtL(t.profit));
+  setKpi(`kpi-${pid}-pct`,fmtPct(t.pct));
+
+  makeChart(`chart-${pid}-bar`, barConfig(MONTHS,[
+    {label:'Invoice',data:cm.invoice,backgroundColor:color+'CC',borderRadius:4},
+    {label:'Cost',   data:cm.cost,   backgroundColor:'rgba(228,92,58,0.8)',borderRadius:4},
+    {label:'Profit', data:cm.profit, backgroundColor:'rgba(39,174,96,0.8)',borderRadius:4},
+  ]));
+
+  const projs=D.projects[co], projTotals={};
+  projs.forEach(p=>{ projTotals[p.Project]=(projTotals[p.Project]||0)+p.Invoice; });
+  const sorted=Object.entries(projTotals).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const pal=['#2E86AB','#E45C3A','#2ECC71','#F39C12','#9B59B6','#1ABC9C','#E74C3C','#95A5A6'];
+  makeChart(`chart-${pid}-pie`, pieConfig(
+    sorted.map(x=>x[0].length>18?x[0].slice(0,18)+'…':x[0]),
+    sorted.map(x=>x[1]), pal
+  ));
+
+  let h=`<thead><tr><th>Month</th><th class="num">Invoiced (₹)</th><th class="num">Cost (₹)</th><th class="num">Profit (₹)</th><th class="num">Profit %</th></tr></thead><tbody>`;
+  MONTHS.forEach((m,i)=>{
+    const inv=cm.invoice[i],cost=cm.cost[i],prof=cm.profit[i],pct=cm.pct[i];
+    if(!inv) return;
+    h+=`<tr><td><strong>${m}</strong></td><td class="num">${fmtL(inv)}</td><td class="num">${fmtL(cost)}</td><td class="num" style="color:#27AE60;font-weight:600">${fmtL(prof)}</td><td class="num">${pctBadge(pct)}</td></tr>`;
+  });
+  h+=`<tr style="background:#F7F9FC;font-weight:700;border-top:2px solid #DDE2E8"><td>Total</td><td class="num">${fmtL(t.invoice)}</td><td class="num">${fmtL(t.cost)}</td><td class="num" style="color:#27AE60">${fmtL(t.profit)}</td><td class="num">${pctBadge(t.pct)}</td></tr></tbody>`;
+  document.getElementById(`tbl-${pid}-monthly`).innerHTML=h;
+
+  const mOrd={"Aug'25":1,"Sept'25":2,"Oct'25":3,"Nov'25":4,"Dec'25":5,"Jan'26":6,"Feb'26":7,"Mar'26":8};
+  const sP=[...projs].sort((a,b)=>(mOrd[a.Month]-mOrd[b.Month])||b.Invoice-a.Invoice);
+  let h2=`<thead><tr><th>Month</th><th>Project</th><th class="num">Invoiced</th><th class="num">Cost</th><th class="num">Profit</th><th class="num">Profit %</th></tr></thead><tbody>`;
+  sP.forEach(p=>{
+    h2+=`<tr><td style="white-space:nowrap">${p.Month}</td><td>${p.Project}</td><td class="num">${fmtL(p.Invoice)}</td><td class="num">${fmtL(p.Cost)}</td><td class="num" style="color:#27AE60;font-weight:600">${fmtL(p.Profit)}</td><td class="num">${pctBadge(Math.min(p.ProfitPct,1))}</td></tr>`;
+  });
+  document.getElementById(`tbl-${pid}-projects`).innerHTML=h2+'</tbody>';
+}
+
+// ─── Vendor Page ───────────────────────────────────────────────────────────────
+function buildVendorPage(){
+  const v=D.vendor, totMW=v.totals['Medical Writing'], totWT=v.totals['Webinar/Tech'], totEV=v.totals['Events'], totAll=totMW+totWT+totEV;
+  setKpi('kpi-vend-mw',fmtL(totMW)); setKpi('kpi-vend-wt',fmtL(totWT));
+  setKpi('kpi-vend-ev',fmtL(totEV)); setKpi('kpi-vend-total',fmtL(totAll));
+
+  makeChart('chart-vend-monthly', stackedBarConfig(MONTHS,[
+    {label:'Medical Writing',data:v.monthly['Medical Writing'],backgroundColor:'rgba(26,110,55,0.85)',borderRadius:2},
+    {label:'Webinar/Tech',   data:v.monthly['Webinar/Tech'],   backgroundColor:'rgba(31,97,141,0.85)',borderRadius:2},
+    {label:'Events',         data:v.monthly['Events'],         backgroundColor:'rgba(192,57,43,0.85)',borderRadius:2},
+  ]));
+  makeChart('chart-vend-pie', pieConfig(['Medical Writing','Webinar/Tech','Events'],[totMW,totWT,totEV],['#1A6E37','#1F618D','#C0392B']));
+  makeChart('chart-vend-company', stackedBarConfig(COMPANIES,[
+    {label:'Medical Writing',data:COMPANIES.map(c=>v.by_company[c]['Medical Writing']),backgroundColor:'rgba(26,110,55,0.8)',borderRadius:3},
+    {label:'Webinar/Tech',   data:COMPANIES.map(c=>v.by_company[c]['Webinar/Tech']),   backgroundColor:'rgba(31,97,141,0.8)',borderRadius:3},
+    {label:'Events',         data:COMPANIES.map(c=>v.by_company[c]['Events']),         backgroundColor:'rgba(192,57,43,0.8)',borderRadius:3},
+  ]));
+
+  let h=`<thead><tr><th>Month</th><th class="num">Medical Writing</th><th class="num">Webinar/Tech</th><th class="num">Events</th><th class="num">Total</th></tr></thead><tbody>`;
+  MONTHS.forEach((m,i)=>{
+    const mw=v.monthly['Medical Writing'][i],wt=v.monthly['Webinar/Tech'][i],ev=v.monthly['Events'][i],tt=mw+wt+ev;
+    if(!tt) return;
+    h+=`<tr><td><strong>${m}</strong></td><td class="num"><span class="badge cat-mw">${fmtL(mw)||'—'}</span></td><td class="num"><span class="badge cat-wt">${fmtL(wt)||'—'}</span></td><td class="num"><span class="badge cat-ev">${fmtL(ev)||'—'}</span></td><td class="num"><strong>${fmtL(tt)}</strong></td></tr>`;
+  });
+  h+=`<tr style="background:#F7F9FC;font-weight:700;border-top:2px solid #DDE2E8"><td>Total</td><td class="num">${fmtL(totMW)}</td><td class="num">${fmtL(totWT)}</td><td class="num">${fmtL(totEV)}</td><td class="num">${fmtL(totAll)}</td></tr></tbody>`;
+  document.getElementById('tbl-vend-monthly').innerHTML=h;
+
+  let h2=`<thead><tr><th>Company</th><th class="num">Medical Writing</th><th class="num">Webinar/Tech</th><th class="num">Events</th><th class="num">Total</th><th class="num">% of Total</th></tr></thead><tbody>`;
+  COMPANIES.forEach(co=>{
+    const vc=v.by_company[co], mw=vc['Medical Writing'],wt=vc['Webinar/Tech'],ev=vc['Events'],tt=mw+wt+ev;
+    if(!tt) return;
+    const dot=`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${CO_COLORS[co]};margin-right:6px"></span>`;
+    h2+=`<tr><td>${dot}${co}</td><td class="num">${mw?fmtL(mw):'—'}</td><td class="num">${wt?fmtL(wt):'—'}</td><td class="num">${ev?fmtL(ev):'—'}</td><td class="num"><strong>${fmtL(tt)}</strong></td><td class="num">${pctBadge(tt/totAll)}</td></tr>`;
+  });
+  document.getElementById('tbl-vend-company').innerHTML=h2+'</tbody>';
+}
+
+// ─── Init ──────────────────────────────────────────────────────────────────────
+buildOverview();
+buildCompanyPage('Hetero');
+buildCompanyPage('Bayer');
+buildCompanyPage('Lupin');
+buildCompanyPage('P&G');
+buildCompanyPage('Cipla');
+buildCompanyPage('Aurobindo');
+buildCompanyPage('NovoNordisk');
+buildCompanyPage('Zydus');
+buildCompanyPage('KOITA');
+buildCompanyPage('Amneal');
+buildCompanyPage('Resmed');
+buildCompanyPage('Sun Pharma');
+buildVendorPage();
+</script>
+</body>
+</html>
